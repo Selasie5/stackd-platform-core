@@ -14,6 +14,11 @@ const envSchema = z.object({
   SESSION_REDIS_PREFIX: z.string().default('session:'),
   COOKIE_SECURE: z.coerce.boolean().default(false),
   COOKIE_DOMAIN: z.string().optional(),
+  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().email().default('noreply@spleenet.com'),
+  EMAIL_VERIFY_TTL_SECONDS: z.coerce.number().default(86400),
+  EMAIL_VERIFY_REDIS_PREFIX: z.string().default('email_verify:'),
 });
 
 const result = envSchema.safeParse(process.env);

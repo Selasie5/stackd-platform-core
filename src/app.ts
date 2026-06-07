@@ -4,14 +4,13 @@ import cookieParser from 'cookie-parser';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { config } from '@/config/index';
-import { typeDefs } from '@/graphql/typeDefs/index';
+import { allTypeDefs } from '@/graphql/typeDefs/index';
 import { resolvers } from '@/graphql/resolvers/index';
-import type { SessionData } from '@/auth/types';
+import type { GraphQLContext } from '@/graphql/context';
+import { SESSION_COOKIE_NAME } from '@/auth/constants';
+import { getSession } from '@/auth/session.service';
 
-export interface GraphQLContext {
-  session: SessionData | null;
-}
+export type { GraphQLContext } from '@/graphql/context';
 
 export const app = express();
 
@@ -21,7 +20,7 @@ export async function startServer(): Promise<http.Server> {
   const httpServer = http.createServer(app);
 
   const server = new ApolloServer<GraphQLContext>({
-    typeDefs,
+    typeDefs: allTypeDefs,
     resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
@@ -36,9 +35,10 @@ export async function startServer(): Promise<http.Server> {
     '/graphql',
     express.json(),
     expressMiddleware(server, {
-      context: async ({ req }): Promise<GraphQLContext> => {
-        void req.cookies?.[config.SESSION_COOKIE_NAME];
-        return { session: null };
+      context: async ({ req, res }): Promise<GraphQLContext> => {
+        const token = req.cookies?.[SESSION_COOKIE_NAME];
+        const session = token ? await getSession(token) : null;
+        return { req, res, session };
       },
     }),
   );
