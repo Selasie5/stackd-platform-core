@@ -7,6 +7,10 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
@@ -17,6 +21,7 @@
     "@apollo/server": "^5.0.0",
     "@as-integrations/express5": "^1.1.0",
     "@neondatabase/serverless": "^1.0.0",
+    "bcrypt": "^6.0.0",
     "bullmq": "^5.0.0",
     "cloudinary": "^2.0.0",
     "cookie-parser": "^1.4.7",
@@ -25,20 +30,26 @@
     "express": "^5.0.0",
     "graphql": "^16.10.0",
     "ioredis": "^5.4.0",
+    "resend": "^6.12.4",
+    "ws": "^8.21.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "drizzle-kit": "^0.30.0",
     "eslint": "^9.0.0",
-    "typescript-eslint": "^8.0.0",
     "prettier": "^3.4.0",
     "tsc-alias": "^1.8.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.1.8"
   }
 }
