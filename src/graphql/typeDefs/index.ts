@@ -1,5 +1,6 @@
 ﻿import { authTypeDefs } from '@/graphql/typeDefs/auth';
 import { kycTypeDefs } from '@/graphql/typeDefs/kyc';
+import { opportunitiesTypeDefs } from '@/graphql/typeDefs/opportunities';
 
 export const typeDefs = `#graphql
   type Query {
@@ -11,4 +12,4 @@ export const typeDefs = `#graphql
   }
 `;
 
-export const allTypeDefs = [typeDefs, authTypeDefs, kycTypeDefs];
+export const allTypeDefs = [typeDefs, authTypeDefs, kycTypeDefs, opportunitiesTypeDefs];
