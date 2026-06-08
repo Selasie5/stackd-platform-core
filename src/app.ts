@@ -10,6 +10,9 @@ import type { GraphQLContext } from '@/graphql/context';
 import { SESSION_COOKIE_NAME } from '@/auth/constants';
 import { getSession } from '@/auth/session.service';
 import { paystackWebhookHandler } from '@/routes/paystack-webhook';
+import { redisClient } from '@/queues/client';
+import { db } from '@/db/client';
+import { sql } from 'drizzle-orm';
 
 export type { GraphQLContext } from '@/graphql/context';
 
@@ -36,6 +39,31 @@ export async function startServer(): Promise<http.Server> {
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/health/ready', async (_req, res) => {
+    const checks: Record<string, string> = {};
+
+    try {
+      const pong = await redisClient.ping();
+      checks.redis = pong === 'PONG' ? 'ok' : 'error';
+    } catch {
+      checks.redis = 'error';
+    }
+
+    try {
+      await db.execute(sql`SELECT 1`);
+      checks.database = 'ok';
+    } catch {
+      checks.database = 'error';
+    }
+
+    const ready = Object.values(checks).every((status) => status === 'ok');
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ready' : 'not_ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   app.use(

@@ -10,7 +10,7 @@ import {
 import type { SessionData } from '@/auth/types';
 import { paymentError } from '@/payments/errors';
 import { formatCreatorWallet, getCreatorWallet } from '@/wallets/creator-wallet.service';
-import { formatBrandWallet, getMyBrandWallet } from '@/payments/wallet-funding.service';
+import { getMyBrandWallet } from '@/payments/wallet-funding.service';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;

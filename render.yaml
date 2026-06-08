@@ -1,0 +1,68 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: connect this repo in Render Dashboard → New → Blueprint → apply this file.
+# Set DATABASE_URL and secrets in the dashboard after the first sync.
+#
+# Note: db:push is NOT run automatically — the production Docker image omits dev
+# dependencies (drizzle-kit). Run migrations manually before deploy (see docs/DEPLOY.md).
+
+services:
+  - type: redis
+    name: spleenet-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  - type: web
+    name: spleenet-api
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health/ready
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: '4000'
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: spleenet-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: SESSION_COOKIE_NAME
+        value: spleenet_session
+      - key: SESSION_TTL_SECONDS
+        value: '86400'
+      - key: SESSION_REDIS_PREFIX
+        value: 'session:'
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_VERIFY_TTL_SECONDS
+        value: '86400'
+      - key: EMAIL_VERIFY_REDIS_PREFIX
+        value: 'email_verify:'
+      - key: NOTIFICATION_QUEUE_NAME
+        value: notifications
+      - key: ADMIN_NOTIFICATION_EMAIL
+        value: 'true'
+      - key: RESEND_API_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_WEBHOOK_SECRET
+        sync: false
+      - key: FCM_PROJECT_ID
+        sync: false
+      - key: FCM_CLIENT_EMAIL
+        sync: false
+      - key: FCM_PRIVATE_KEY
+        sync: false
+      - key: COOKIE_DOMAIN
+        sync: false

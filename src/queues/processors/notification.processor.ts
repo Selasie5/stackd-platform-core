@@ -1,5 +1,5 @@
 import { Worker } from 'bullmq';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { config } from '@/config/index';
 import { db } from '@/db/client';

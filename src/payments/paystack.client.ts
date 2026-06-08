@@ -12,6 +12,7 @@ function requireSecretKey(): string {
 }
 
 export function toPaystackAmount(amount: string, currency: 'NGN' | 'GHS' | 'USD'): number {
+  void currency;
   const value = parseFloat(amount);
   if (Number.isNaN(value) || value <= 0) {
     throw paymentError('INVALID_AMOUNT', 'Amount must be greater than zero');
