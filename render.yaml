@@ -1,11 +1,3 @@
-# Render Blueprint — https://render.com/docs/blueprint-spec
-#
-# Deploy: connect this repo in Render Dashboard → New → Blueprint → apply this file.
-# Set DATABASE_URL and secrets in the dashboard after the first sync.
-#
-# Note: db:push is NOT run automatically — the production Docker image omits dev
-# dependencies (drizzle-kit). Run migrations manually before deploy (see docs/DEPLOY.md).
-
 services:
   - type: redis
     name: spleenet-redis
