@@ -129,6 +129,9 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'application_rejected',
   'dispute_opened',
   'dispute_resolved',
+  'admin_kyc_pending_review',
+  'admin_campaign_pending_review',
+  'admin_dispute_opened',
 ]);
 
 export const messageReferenceTypeEnum = pgEnum('message_reference_type', [
@@ -673,6 +676,23 @@ export const messages = pgTable('messages', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const deviceTokens = pgTable(
+  'device_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: varchar('token', { length: 512 }).notNull(),
+    platform: varchar('platform', { length: 20 }).notNull(),
+    lastUsedAt: timestamp('last_used_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userTokenIdx: index('device_tokens_user_token_idx').on(table.userId, table.token),
+  }),
+);
+
 export const notifications = pgTable('notifications', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -695,6 +715,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   creator: one(creators, { fields: [users.id], references: [creators.userId] }),
   sessions: many(sessions),
   notifications: many(notifications),
+  deviceTokens: many(deviceTokens),
   sentMessages: many(messages, { relationName: 'sentMessages' }),
   receivedMessages: many(messages, { relationName: 'receivedMessages' }),
   kycApplications: many(kycApplications),
@@ -856,6 +877,10 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     references: [users.id],
     relationName: 'receivedMessages',
   }),
+}));
+
+export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
+  user: one(users, { fields: [deviceTokens.userId], references: [users.id] }),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
