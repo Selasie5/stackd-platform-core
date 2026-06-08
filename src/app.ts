@@ -21,11 +21,7 @@ export const app = express();
 export async function startServer(): Promise<http.Server> {
   app.use(cookieParser());
 
-  app.post(
-    '/webhooks/paystack',
-    express.raw({ type: 'application/json' }),
-    paystackWebhookHandler,
-  );
+  app.post('/webhooks/paystack', express.raw({ type: 'application/json' }), paystackWebhookHandler);
 
   const httpServer = http.createServer(app);
 

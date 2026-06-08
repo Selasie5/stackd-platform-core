@@ -8,10 +8,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from '@/notifications/notification.service';
-import {
-  registerDeviceToken,
-  removeDeviceToken,
-} from '@/notifications/device-token.service';
+import { registerDeviceToken, removeDeviceToken } from '@/notifications/device-token.service';
 
 export const notificationsResolvers = {
   Notification: {

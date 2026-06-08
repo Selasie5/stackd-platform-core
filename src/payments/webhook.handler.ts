@@ -55,7 +55,12 @@ export async function handlePaystackWebhook(
 
   if (payload.event === 'charge.success') {
     const metadata = payload.data?.metadata;
-    if (metadata?.type === 'wallet_topup' && metadata.topUpId && metadata.brandId && metadata.userId) {
+    if (
+      metadata?.type === 'wallet_topup' &&
+      metadata.topUpId &&
+      metadata.brandId &&
+      metadata.userId
+    ) {
       await completeWalletTopUpFromWebhook({
         topUpId: metadata.topUpId,
         brandId: metadata.brandId,

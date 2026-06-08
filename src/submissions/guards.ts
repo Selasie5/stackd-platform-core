@@ -71,7 +71,10 @@ export async function assertNoDuplicateUgcSubmission(orderId: string, creatorId:
     ),
   });
   if (existing) {
-    throw submissionError('DUPLICATE_SUBMISSION', 'You already have an active submission for this order');
+    throw submissionError(
+      'DUPLICATE_SUBMISSION',
+      'You already have an active submission for this order',
+    );
   }
 }
 
@@ -85,7 +88,10 @@ export async function assertNoDuplicateCpmSubmission(dealId: string, creatorId: 
     ),
   });
   if (existing) {
-    throw submissionError('DUPLICATE_SUBMISSION', 'You already have an active submission for this deal');
+    throw submissionError(
+      'DUPLICATE_SUBMISSION',
+      'You already have an active submission for this deal',
+    );
   }
 }
 
@@ -99,7 +105,10 @@ export async function assertNoDuplicateContestSubmission(contestId: string, crea
     ),
   });
   if (existing) {
-    throw submissionError('DUPLICATE_SUBMISSION', 'You already have an active submission for this contest');
+    throw submissionError(
+      'DUPLICATE_SUBMISSION',
+      'You already have an active submission for this contest',
+    );
   }
 }
 
@@ -116,9 +125,7 @@ export function assertCreatorSession(session: SessionData, creatorId: string): v
   }
 }
 
-export function opportunityTypeFromSubmission(
-  type: 'ugc' | 'cpm' | 'contest',
-): OpportunityType {
+export function opportunityTypeFromSubmission(type: 'ugc' | 'cpm' | 'contest'): OpportunityType {
   if (type === 'ugc') return 'UGC_ORDER';
   if (type === 'cpm') return 'CPM_DEAL';
   return 'CONTEST';

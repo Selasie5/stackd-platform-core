@@ -228,7 +228,13 @@ export async function listCreatorWalletTransactions(session: SessionData, limit?
 
 export async function listCreatorPayments(
   session: SessionData,
-  status?: 'in_escrow' | 'awaiting_approval' | 'ready_for_payout' | 'paid' | 'disputed' | 'refunded',
+  status?:
+    | 'in_escrow'
+    | 'awaiting_approval'
+    | 'ready_for_payout'
+    | 'paid'
+    | 'disputed'
+    | 'refunded',
 ) {
   if (!session.creatorId) {
     throw paymentError('WALLET_NOT_FOUND', 'Creator not found');
@@ -279,7 +285,13 @@ export async function listAdminWithdrawals(
 }
 
 export async function listAdminPayments(
-  status?: 'in_escrow' | 'awaiting_approval' | 'ready_for_payout' | 'paid' | 'disputed' | 'refunded',
+  status?:
+    | 'in_escrow'
+    | 'awaiting_approval'
+    | 'ready_for_payout'
+    | 'paid'
+    | 'disputed'
+    | 'refunded',
   limit?: number,
 ) {
   const rows = await db.query.payments.findMany({

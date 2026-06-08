@@ -43,11 +43,12 @@ export interface WalletReference {
   description: string;
 }
 
-export const OPPORTUNITY_REFERENCE_TYPE: Record<OpportunityType, WalletReference['referenceType']> = {
-  UGC_ORDER: 'ugc_order',
-  CPM_DEAL: 'cpm_deal',
-  CONTEST: 'contest',
-};
+export const OPPORTUNITY_REFERENCE_TYPE: Record<OpportunityType, WalletReference['referenceType']> =
+  {
+    UGC_ORDER: 'ugc_order',
+    CPM_DEAL: 'cpm_deal',
+    CONTEST: 'contest',
+  };
 
 export const LAUNCH_NOTIFICATION_TYPE: Record<
   OpportunityType,
@@ -58,7 +59,10 @@ export const LAUNCH_NOTIFICATION_TYPE: Record<
   CONTEST: 'new_contest_launched',
 };
 
-export const TRANSITIONS: Record<LifecycleAction, Partial<Record<OpportunityStatus, OpportunityStatus[]>>> = {
+export const TRANSITIONS: Record<
+  LifecycleAction,
+  Partial<Record<OpportunityStatus, OpportunityStatus[]>>
+> = {
   submit: { draft: ['pending_approval'] },
   reject: { pending_approval: ['draft'] },
   approve: { pending_approval: ['live'] },
@@ -85,7 +89,10 @@ export function assertValidTransition(
   }
 }
 
-export function getTargetStatus(action: LifecycleAction, from: OpportunityStatus): OpportunityStatus {
+export function getTargetStatus(
+  action: LifecycleAction,
+  from: OpportunityStatus,
+): OpportunityStatus {
   const allowed = TRANSITIONS[action][from];
   if (!allowed || allowed.length !== 1) {
     throw new Error(`Invalid transition action ${action} from status ${from}`);

@@ -35,8 +35,5 @@ export async function getSession(token: string): Promise<SessionData | null> {
 
 export async function revokeSession(token: string): Promise<void> {
   await redisClient.del(buildSessionKey(token));
-  await db
-    .update(sessions)
-    .set({ revokedAt: new Date() })
-    .where(eq(sessions.token, token));
+  await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.token, token));
 }

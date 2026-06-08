@@ -6,10 +6,7 @@ import { brandWallets, brands, creatorWallets, creators, users } from '@/db/sche
 import type { InferSelectModel } from 'drizzle-orm';
 import { redisClient } from '@/queues/client';
 import { hashPassword, verifyPassword } from '@/auth/password';
-import {
-  buildEmailVerifyKey,
-  EMAIL_VERIFY_TTL_SECONDS,
-} from '@/auth/constants';
+import { buildEmailVerifyKey, EMAIL_VERIFY_TTL_SECONDS } from '@/auth/constants';
 import { authError } from '@/auth/errors';
 import { createSession, revokeSession } from '@/auth/session.service';
 import { sendVerificationEmail } from '@/services/email/index';
@@ -208,10 +205,7 @@ export async function registerCreator(input: unknown) {
   };
 }
 
-export async function login(
-  input: unknown,
-  meta?: { ipAddress?: string; userAgent?: string },
-) {
+export async function login(input: unknown, meta?: { ipAddress?: string; userAgent?: string }) {
   const data = loginSchema.parse(input);
   const user = await findUserByEmail(data.email);
 
@@ -249,7 +243,10 @@ export async function logout(sessionToken: string | undefined): Promise<boolean>
   return true;
 }
 
-export async function verifyEmail(token: string, meta?: { ipAddress?: string; userAgent?: string }) {
+export async function verifyEmail(
+  token: string,
+  meta?: { ipAddress?: string; userAgent?: string },
+) {
   const raw = await redisClient.get(buildEmailVerifyKey(token));
   if (!raw) {
     throw authError('INVALID_TOKEN', 'Verification link is invalid or has expired');

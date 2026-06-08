@@ -140,18 +140,17 @@ export const opportunitiesResolvers = {
       const session = await requireBrandWriteAccess(ctx);
       return submitOpportunityForApproval(session, type, id);
     },
-    reviewOpportunity: async (
-      _: unknown,
-      { input }: { input: unknown },
-      ctx: GraphQLContext,
-    ) => {
+    reviewOpportunity: async (_: unknown, { input }: { input: unknown }, ctx: GraphQLContext) => {
       const session = requireAdmin(ctx);
-      return reviewOpportunity(session, input as {
-        type: OpportunityType;
-        id: string;
-        decision: 'approved' | 'rejected';
-        adminNote?: string;
-      });
+      return reviewOpportunity(
+        session,
+        input as {
+          type: OpportunityType;
+          id: string;
+          decision: 'approved' | 'rejected';
+          adminNote?: string;
+        },
+      );
     },
     pauseOpportunity: async (
       _: unknown,

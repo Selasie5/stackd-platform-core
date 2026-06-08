@@ -157,7 +157,9 @@ export async function approveCpmSubmission(session: SessionData, submissionId: s
     currency: deal.currency,
   });
 
-  const creator = await db.query.creators.findFirst({ where: eq(creators.id, submission.creatorId) });
+  const creator = await db.query.creators.findFirst({
+    where: eq(creators.id, submission.creatorId),
+  });
   if (creator) {
     await notify({
       userId: creator.userId,
