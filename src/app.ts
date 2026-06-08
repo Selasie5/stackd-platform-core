@@ -9,6 +9,7 @@ import { resolvers } from '@/graphql/resolvers/index';
 import type { GraphQLContext } from '@/graphql/context';
 import { SESSION_COOKIE_NAME } from '@/auth/constants';
 import { getSession } from '@/auth/session.service';
+import { paystackWebhookHandler } from '@/routes/paystack-webhook';
 
 export type { GraphQLContext } from '@/graphql/context';
 
@@ -16,6 +17,12 @@ export const app = express();
 
 export async function startServer(): Promise<http.Server> {
   app.use(cookieParser());
+
+  app.post(
+    '/webhooks/paystack',
+    express.raw({ type: 'application/json' }),
+    paystackWebhookHandler,
+  );
 
   const httpServer = http.createServer(app);
 

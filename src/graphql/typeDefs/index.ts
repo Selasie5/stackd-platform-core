@@ -2,6 +2,7 @@
 import { kycTypeDefs } from '@/graphql/typeDefs/kyc';
 import { notificationsTypeDefs } from '@/graphql/typeDefs/notifications';
 import { opportunitiesTypeDefs } from '@/graphql/typeDefs/opportunities';
+import { walletTypeDefs } from '@/graphql/typeDefs/wallet';
 
 export const typeDefs = `#graphql
   type Query {
@@ -19,4 +20,5 @@ export const allTypeDefs = [
   kycTypeDefs,
   opportunitiesTypeDefs,
   notificationsTypeDefs,
+  walletTypeDefs,
 ];

@@ -188,4 +188,56 @@ export async function finalizeSpend(
   });
 }
 
+export async function creditFunds(
+  brandId: string,
+  amount: string,
+  currency: 'NGN' | 'GHS' | 'USD',
+  reference: WalletReference,
+): Promise<void> {
+  const creditAmount = parseAmount(amount);
+  if (creditAmount <= 0) {
+    throw opportunityError('INVALID_STATUS', 'Credit amount must be greater than zero');
+  }
+
+  await db.transaction(async (tx) => {
+    const wallet = await tx.query.brandWallets.findFirst({
+      where: eq(brandWallets.brandId, brandId),
+    });
+
+    if (!wallet) {
+      throw opportunityError('WALLET_NOT_FOUND', 'Brand wallet not found');
+    }
+
+    if (wallet.currency !== currency) {
+      throw opportunityError('INVALID_STATUS', 'Credit currency must match wallet currency');
+    }
+
+    const available = parseAmount(wallet.availableBalance);
+    const newAvailable = formatAmount(available + creditAmount);
+
+    await tx
+      .update(brandWallets)
+      .set({
+        availableBalance: newAvailable,
+        updatedAt: new Date(),
+      })
+      .where(eq(brandWallets.id, wallet.id));
+
+    await tx.insert(walletTransactions).values({
+      walletId: wallet.id,
+      brandId,
+      transactionType: 'credit',
+      amount: formatAmount(creditAmount),
+      currency,
+      balanceBefore: wallet.availableBalance,
+      balanceAfter: newAvailable,
+      reservedBefore: wallet.reservedBalance,
+      reservedAfter: wallet.reservedBalance,
+      description: reference.description,
+      referenceType: reference.referenceType,
+      referenceId: reference.referenceId,
+    });
+  });
+}
+
 export { getWallet, parseAmount, formatAmount };

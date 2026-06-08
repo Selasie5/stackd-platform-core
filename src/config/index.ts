@@ -24,6 +24,8 @@ const envSchema = z.object({
   FCM_CLIENT_EMAIL: z.string().optional(),
   FCM_PRIVATE_KEY: z.string().optional(),
   ADMIN_NOTIFICATION_EMAIL: z.coerce.boolean().default(true),
+  PAYSTACK_SECRET_KEY: z.string().optional(),
+  PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);
