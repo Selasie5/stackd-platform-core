@@ -1,12 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
-import {
-  brands,
-  contests,
-  cpmDeals,
-  notifications,
-  ugcOrders,
-} from '@/db/schema/index';
+import { brands, contests, cpmDeals, ugcOrders } from '@/db/schema/index';
+import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { SessionData } from '@/auth/types';
 import { opportunityError } from '@/opportunities/errors';
 import { finalizeSpend, releaseFunds, reserveFunds } from '@/opportunities/wallet.service';
@@ -111,6 +106,12 @@ async function updateOpportunityStatus(
   await db.update(contests).set(values).where(eq(contests.id, id));
 }
 
+const OPPORTUNITY_TYPE_LABEL: Record<OpportunityType, string> = {
+  UGC_ORDER: 'UGC order',
+  CPM_DEAL: 'CPM deal',
+  CONTEST: 'contest',
+};
+
 async function createLaunchNotification(
   brandId: string,
   type: OpportunityType,
@@ -122,11 +123,31 @@ async function createLaunchNotification(
   });
   if (!brand) return;
 
-  await db.insert(notifications).values({
+  await notify({
     userId: brand.userId,
     type: LAUNCH_NOTIFICATION_TYPE[type],
     title: 'Campaign launched',
     body: `Your campaign "${title}" is now live.`,
+    referenceType: OPPORTUNITY_REFERENCE_TYPE[type],
+    referenceId: opportunityId,
+  });
+}
+
+async function createSubmitForApprovalNotification(
+  brandId: string,
+  type: OpportunityType,
+  opportunityId: string,
+  title: string,
+): Promise<void> {
+  const brand = await db.query.brands.findFirst({
+    where: eq(brands.id, brandId),
+  });
+  if (!brand) return;
+
+  await notifyAdmins({
+    type: 'admin_campaign_pending_review',
+    title: 'Campaign pending approval',
+    body: `${brand.brandName} submitted a ${OPPORTUNITY_TYPE_LABEL[type]} "${title}" for approval.`,
     referenceType: OPPORTUNITY_REFERENCE_TYPE[type],
     referenceId: opportunityId,
   });
@@ -175,6 +196,12 @@ async function applyTransition(
     referenceId: record.id,
     description: `${action} ${record.title}`,
   };
+
+  if (action === 'submit') {
+    await updateOpportunityStatus(type, id, nextStatus);
+    await createSubmitForApprovalNotification(record.brandId, type, id, record.title);
+    return formatOpportunity(type, id);
+  }
 
   if (action === 'approve') {
     await reserveFunds(record.brandId, record.budgetAmount, record.currency, reference);

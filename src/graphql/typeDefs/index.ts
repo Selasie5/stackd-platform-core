@@ -1,5 +1,6 @@
 ﻿import { authTypeDefs } from '@/graphql/typeDefs/auth';
 import { kycTypeDefs } from '@/graphql/typeDefs/kyc';
+import { notificationsTypeDefs } from '@/graphql/typeDefs/notifications';
 import { opportunitiesTypeDefs } from '@/graphql/typeDefs/opportunities';
 
 export const typeDefs = `#graphql
@@ -12,4 +13,10 @@ export const typeDefs = `#graphql
   }
 `;
 
-export const allTypeDefs = [typeDefs, authTypeDefs, kycTypeDefs, opportunitiesTypeDefs];
+export const allTypeDefs = [
+  typeDefs,
+  authTypeDefs,
+  kycTypeDefs,
+  opportunitiesTypeDefs,
+  notificationsTypeDefs,
+];

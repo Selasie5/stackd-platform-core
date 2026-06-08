@@ -1,7 +1,9 @@
 import { config } from '@/config/index';
 import { startServer } from '@/app';
+import { startNotificationWorker } from '@/queues/processors/notification.processor';
 
 async function main(): Promise<void> {
+  startNotificationWorker();
   const httpServer = await startServer();
 
   httpServer.listen(config.PORT, () => {

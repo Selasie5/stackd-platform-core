@@ -19,6 +19,11 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().email().default('noreply@spleenet.com'),
   EMAIL_VERIFY_TTL_SECONDS: z.coerce.number().default(86400),
   EMAIL_VERIFY_REDIS_PREFIX: z.string().default('email_verify:'),
+  NOTIFICATION_QUEUE_NAME: z.string().default('notifications'),
+  FCM_PROJECT_ID: z.string().optional(),
+  FCM_CLIENT_EMAIL: z.string().optional(),
+  FCM_PRIVATE_KEY: z.string().optional(),
+  ADMIN_NOTIFICATION_EMAIL: z.coerce.boolean().default(true),
 });
 
 const result = envSchema.safeParse(process.env);
