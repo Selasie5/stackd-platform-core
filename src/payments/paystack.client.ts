@@ -81,6 +81,56 @@ export function verifyWebhookSignature(rawBody: string, signature: string | unde
   }
 }
 
+export interface TransferRecipientResult {
+  recipient_code: string;
+  details: Record<string, unknown>;
+}
+
+export async function createTransferRecipient(input: {
+  type: 'nuban' | 'mobile_money';
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+  currency: 'NGN' | 'GHS' | 'USD';
+}): Promise<TransferRecipientResult> {
+  return paystackFetch<TransferRecipientResult>('/transferrecipient', {
+    method: 'POST',
+    body: JSON.stringify({
+      type: input.type,
+      name: input.name,
+      account_number: input.accountNumber,
+      bank_code: input.bankCode,
+      currency: input.currency,
+    }),
+  });
+}
+
+export interface InitiateTransferResult {
+  transfer_code: string;
+  reference: string;
+  status: string;
+}
+
+export async function initiateTransfer(input: {
+  amount: number;
+  recipientCode: string;
+  reason: string;
+  reference: string;
+  currency: 'NGN' | 'GHS' | 'USD';
+}): Promise<InitiateTransferResult> {
+  return paystackFetch<InitiateTransferResult>('/transfer', {
+    method: 'POST',
+    body: JSON.stringify({
+      source: 'balance',
+      amount: input.amount,
+      recipient: input.recipientCode,
+      reason: input.reason,
+      reference: input.reference,
+      currency: input.currency,
+    }),
+  });
+}
+
 /** @internal test helper */
 export function signWebhookPayloadForTest(rawBody: string, secret: string): string {
   return createHmac('sha512', secret).update(rawBody).digest('hex');

@@ -185,6 +185,14 @@ export async function fundBrandWallet(brandId: string, amount: string): Promise<
     .where(eq(brandWallets.brandId, brandId));
 }
 
+export async function fundCreatorWallet(creatorId: string, amount: string): Promise<void> {
+  const { creatorWallets } = await import('@/db/schema/index');
+  await db
+    .update(creatorWallets)
+    .set({ availableBalance: amount, totalEarned: amount, updatedAt: new Date() })
+    .where(eq(creatorWallets.creatorId, creatorId));
+}
+
 function futureDate(daysFromNow: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);

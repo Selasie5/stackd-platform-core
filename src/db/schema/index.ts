@@ -238,10 +238,12 @@ export const creators = pgTable('creators', {
   paymentDetails: jsonb('payment_details').$type<{
     method: 'bank_transfer' | 'mobile_money';
     bankName?: string;
+    bankCode?: string;
     accountNumber?: string;
     accountName?: string;
     mobileMoneyNumber?: string;
     mobileMoneyProvider?: string;
+    paystackRecipientCode?: string;
   }>(),
   /** Cached from latest kyc_applications row */
   kycStatus: kycStatusEnum('kyc_status').default('not_started').notNull(),
@@ -376,6 +378,41 @@ export const creatorWallets = pgTable('creator_wallets', {
   totalEarned: numeric('total_earned', { precision: 15, scale: 2 }).default('0').notNull(),
   totalWithdrawn: numeric('total_withdrawn', { precision: 15, scale: 2 }).default('0').notNull(),
   status: walletStatusEnum('status').default('frozen').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const withdrawalStatusEnum = pgEnum('withdrawal_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+]);
+
+export const withdrawals = pgTable('withdrawals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  creatorId: uuid('creator_id')
+    .notNull()
+    .references(() => creators.id, { onDelete: 'cascade' }),
+  walletId: uuid('wallet_id')
+    .notNull()
+    .references(() => creatorWallets.id),
+  amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+  currency: currencyEnum('currency').notNull(),
+  paystackReference: varchar('paystack_reference', { length: 255 }).notNull().unique(),
+  paystackStatus: varchar('paystack_status', { length: 100 }),
+  status: withdrawalStatusEnum('status').default('pending').notNull(),
+  paymentDetailsSnapshot: jsonb('payment_details_snapshot').$type<{
+    method: 'bank_transfer' | 'mobile_money';
+    bankName?: string;
+    bankCode?: string;
+    accountNumber?: string;
+    accountName?: string;
+    mobileMoneyNumber?: string;
+    mobileMoneyProvider?: string;
+  }>(),
+  failureReason: text('failure_reason'),
+  completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -809,6 +846,7 @@ export const creatorsRelations = relations(creators, ({ one, many }) => ({
   ugcSubmissions: many(ugcSubmissions),
   cpmSubmissions: many(cpmSubmissions),
   payments: many(payments),
+  withdrawals: many(withdrawals),
 }));
 
 export const kycApplicationsRelations = relations(kycApplications, ({ one }) => ({
@@ -833,6 +871,12 @@ export const walletTopUpsRelations = relations(walletTopUps, ({ one }) => ({
 export const creatorWalletsRelations = relations(creatorWallets, ({ one, many }) => ({
   creator: one(creators, { fields: [creatorWallets.creatorId], references: [creators.id] }),
   transactions: many(creatorWalletTransactions),
+  withdrawals: many(withdrawals),
+}));
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  creator: one(creators, { fields: [withdrawals.creatorId], references: [creators.id] }),
+  wallet: one(creatorWallets, { fields: [withdrawals.walletId], references: [creatorWallets.id] }),
 }));
 
 export const creatorWalletTransactionsRelations = relations(creatorWalletTransactions, ({ one }) => ({
