@@ -6,7 +6,8 @@ export type PaymentErrorCode =
   | 'WALLET_FROZEN'
   | 'WALLET_NOT_FOUND'
   | 'TOP_UP_NOT_FOUND'
-  | 'TOP_UP_ALREADY_PROCESSED';
+  | 'TOP_UP_ALREADY_PROCESSED'
+  | 'ESCROW_ALREADY_ALLOCATED';
 
 export function paymentError(code: PaymentErrorCode, message: string): GraphQLError {
   return new GraphQLError(message, { extensions: { code } });

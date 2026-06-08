@@ -365,6 +365,40 @@ export const paystackEvents = pgTable('paystack_events', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const creatorWallets = pgTable('creator_wallets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  creatorId: uuid('creator_id')
+    .notNull()
+    .unique()
+    .references(() => creators.id, { onDelete: 'cascade' }),
+  currency: currencyEnum('currency').notNull(),
+  availableBalance: numeric('available_balance', { precision: 15, scale: 2 }).default('0').notNull(),
+  totalEarned: numeric('total_earned', { precision: 15, scale: 2 }).default('0').notNull(),
+  totalWithdrawn: numeric('total_withdrawn', { precision: 15, scale: 2 }).default('0').notNull(),
+  status: walletStatusEnum('status').default('frozen').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const creatorWalletTransactions = pgTable('creator_wallet_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  walletId: uuid('wallet_id')
+    .notNull()
+    .references(() => creatorWallets.id),
+  creatorId: uuid('creator_id')
+    .notNull()
+    .references(() => creators.id),
+  transactionType: transactionTypeEnum('transaction_type').notNull(),
+  amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+  currency: currencyEnum('currency').notNull(),
+  balanceBefore: numeric('balance_before', { precision: 15, scale: 2 }).notNull(),
+  balanceAfter: numeric('balance_after', { precision: 15, scale: 2 }).notNull(),
+  description: text('description'),
+  referenceType: varchar('reference_type', { length: 50 }),
+  referenceId: uuid('reference_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const walletTransactions = pgTable('wallet_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
   walletId: uuid('wallet_id')
@@ -768,6 +802,7 @@ export const brandsRelations = relations(brands, ({ one, many }) => ({
 
 export const creatorsRelations = relations(creators, ({ one, many }) => ({
   user: one(users, { fields: [creators.userId], references: [users.id] }),
+  wallet: one(creatorWallets, { fields: [creators.id], references: [creatorWallets.creatorId] }),
   kycApplications: many(kycApplications),
   samples: many(creatorSamples),
   contestSubmissions: many(contestSubmissions),
@@ -793,6 +828,22 @@ export const creatorSamplesRelations = relations(creatorSamples, ({ one }) => ({
 
 export const walletTopUpsRelations = relations(walletTopUps, ({ one }) => ({
   brand: one(brands, { fields: [walletTopUps.brandId], references: [brands.id] }),
+}));
+
+export const creatorWalletsRelations = relations(creatorWallets, ({ one, many }) => ({
+  creator: one(creators, { fields: [creatorWallets.creatorId], references: [creators.id] }),
+  transactions: many(creatorWalletTransactions),
+}));
+
+export const creatorWalletTransactionsRelations = relations(creatorWalletTransactions, ({ one }) => ({
+  wallet: one(creatorWallets, {
+    fields: [creatorWalletTransactions.walletId],
+    references: [creatorWallets.id],
+  }),
+  creator: one(creators, {
+    fields: [creatorWalletTransactions.creatorId],
+    references: [creators.id],
+  }),
 }));
 
 export const brandWalletsRelations = relations(brandWallets, ({ one, many }) => ({

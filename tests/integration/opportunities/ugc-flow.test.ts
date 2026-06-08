@@ -134,7 +134,8 @@ describe('ugc order flow', () => {
       where: eq(brandWallets.brandId, brandId),
     });
     expect(walletAfterComplete?.reservedBalance).toBe('0.00');
-    expect(walletAfterComplete?.totalSpent).toBe('25000.00');
+    expect(walletAfterComplete?.availableBalance).toBe('100000.00');
+    expect(walletAfterComplete?.totalSpent).toBe('0.00');
   },
     120_000,
   );

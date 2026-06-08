@@ -127,6 +127,57 @@ export async function createKycApprovedBrand(
   return brand;
 }
 
+export async function createKycApprovedCreator(
+  overrides: Partial<{ email: string; fullName: string; school: string; country: string }> = {},
+): Promise<VerifiedUserResult> {
+  const creator = await createVerifiedCreator(overrides);
+  const admin = await ensureAdminSession();
+
+  await executeGql(
+    `mutation($input: SubmitKycInput!) {
+      submitKyc(input: $input) { id }
+    }`,
+    {
+      sessionToken: creator.sessionToken,
+      variables: {
+        input: {
+          documents: [
+            {
+              documentType: 'student_id',
+              fileUrl: 'https://example.com/id.pdf',
+            },
+          ],
+          schoolEmail: 'student@university.edu',
+        },
+      },
+    },
+  );
+
+  const appResult = await executeGql<{ myKycApplication: { id: string } }>(
+    `query { myKycApplication { id } }`,
+    { sessionToken: creator.sessionToken },
+  );
+  const applicationId = appResult.data?.myKycApplication?.id;
+  if (!applicationId) throw new Error('Expected KYC application id');
+
+  await executeGql(
+    `mutation($input: ReviewKycInput!) {
+      reviewKyc(input: $input) { status }
+    }`,
+    {
+      sessionToken: admin.sessionToken,
+      variables: {
+        input: {
+          applicationId,
+          decision: 'approved',
+        },
+      },
+    },
+  );
+
+  return creator;
+}
+
 export async function fundBrandWallet(brandId: string, amount: string): Promise<void> {
   await db
     .update(brandWallets)
