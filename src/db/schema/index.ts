@@ -335,6 +335,36 @@ export const brandWallets = pgTable('brand_wallets', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const walletTopUpStatusEnum = pgEnum('wallet_top_up_status', [
+  'pending',
+  'completed',
+  'failed',
+]);
+
+export const walletTopUps = pgTable('wallet_top_ups', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  brandId: uuid('brand_id')
+    .notNull()
+    .references(() => brands.id, { onDelete: 'cascade' }),
+  amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+  currency: currencyEnum('currency').notNull(),
+  paystackReference: varchar('paystack_reference', { length: 255 }).notNull().unique(),
+  status: walletTopUpStatusEnum('status').default('pending').notNull(),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const paystackEvents = pgTable('paystack_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  eventId: varchar('event_id', { length: 255 }).notNull().unique(),
+  eventType: varchar('event_type', { length: 100 }).notNull(),
+  reference: varchar('reference', { length: 255 }),
+  payload: jsonb('payload').notNull(),
+  processedAt: timestamp('processed_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const walletTransactions = pgTable('wallet_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
   walletId: uuid('wallet_id')
@@ -729,6 +759,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 export const brandsRelations = relations(brands, ({ one, many }) => ({
   user: one(users, { fields: [brands.userId], references: [users.id] }),
   wallet: one(brandWallets, { fields: [brands.id], references: [brandWallets.brandId] }),
+  walletTopUps: many(walletTopUps),
   kycApplications: many(kycApplications),
   ugcOrders: many(ugcOrders),
   cpmDeals: many(cpmDeals),
@@ -758,6 +789,10 @@ export const kycApplicationsRelations = relations(kycApplications, ({ one }) => 
 
 export const creatorSamplesRelations = relations(creatorSamples, ({ one }) => ({
   creator: one(creators, { fields: [creatorSamples.creatorId], references: [creators.id] }),
+}));
+
+export const walletTopUpsRelations = relations(walletTopUps, ({ one }) => ({
+  brand: one(brands, { fields: [walletTopUps.brandId], references: [brands.id] }),
 }));
 
 export const brandWalletsRelations = relations(brandWallets, ({ one, many }) => ({

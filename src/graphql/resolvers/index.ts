@@ -2,6 +2,7 @@
 import { kycResolvers } from '@/graphql/resolvers/kyc';
 import { notificationsResolvers } from '@/graphql/resolvers/notifications';
 import { opportunitiesResolvers } from '@/graphql/resolvers/opportunities';
+import { walletResolvers } from '@/graphql/resolvers/wallet';
 
 export const resolvers = {
   OpportunityResult: opportunitiesResolvers.OpportunityResult,
@@ -11,11 +12,13 @@ export const resolvers = {
     ...kycResolvers.Query,
     ...opportunitiesResolvers.Query,
     ...notificationsResolvers.Query,
+    ...walletResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
     ...kycResolvers.Mutation,
     ...opportunitiesResolvers.Mutation,
     ...notificationsResolvers.Mutation,
+    ...walletResolvers.Mutation,
   },
 };
