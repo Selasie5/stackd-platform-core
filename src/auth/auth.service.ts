@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import { brandWallets, brands, creators, users } from '@/db/schema/index';
+import { brandWallets, brands, creatorWallets, creators, users } from '@/db/schema/index';
 import type { InferSelectModel } from 'drizzle-orm';
 import { redisClient } from '@/queues/client';
 import { hashPassword, verifyPassword } from '@/auth/password';
@@ -181,11 +181,21 @@ export async function registerCreator(input: unknown) {
     })
     .returning();
 
-  await db.insert(creators).values({
-    userId: user.id,
-    fullName: data.fullName,
-    country: data.country,
-    school: data.school,
+  const [creator] = await db
+    .insert(creators)
+    .values({
+      userId: user.id,
+      fullName: data.fullName,
+      country: data.country,
+      school: data.school,
+    })
+    .returning();
+
+  const currency = data.country ? currencyForCountry(data.country) : 'NGN';
+  await db.insert(creatorWallets).values({
+    creatorId: creator.id,
+    currency,
+    status: 'frozen',
   });
 
   const token = await createEmailVerificationToken(user.id, email);

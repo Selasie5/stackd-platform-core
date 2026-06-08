@@ -1,10 +1,12 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { brands, contests, cpmDeals, ugcOrders } from '@/db/schema/index';
+import { loadOpportunity } from '@/opportunities/opportunity.loader';
 import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { SessionData } from '@/auth/types';
 import { opportunityError } from '@/opportunities/errors';
-import { finalizeSpend, releaseFunds, reserveFunds } from '@/opportunities/wallet.service';
+import { releaseEscrowForOpportunity } from '@/payments/escrow.service';
+import { releaseFunds, reserveFunds } from '@/opportunities/wallet.service';
 import {
   getTargetStatus,
   LAUNCH_NOTIFICATION_TYPE,
@@ -17,64 +19,6 @@ import {
 import { formatContest, getContestById } from '@/opportunities/contest.service';
 import { formatCpmDeal, getCpmDealById } from '@/opportunities/cpm.service';
 import { formatUgcOrder, getUgcOrderById } from '@/opportunities/ugc.service';
-
-interface OpportunityRecord {
-  id: string;
-  brandId: string;
-  status: OpportunityStatus;
-  currency: 'NGN' | 'GHS' | 'USD';
-  budgetAmount: string;
-  reservedAt: Date | null;
-  title: string;
-}
-
-async function loadOpportunity(type: OpportunityType, id: string): Promise<OpportunityRecord> {
-  if (type === 'UGC_ORDER') {
-    const row = await db.query.ugcOrders.findFirst({
-      where: and(eq(ugcOrders.id, id), isNull(ugcOrders.deletedAt)),
-    });
-    if (!row) throw opportunityError('OPPORTUNITY_NOT_FOUND', 'UGC order not found');
-    return {
-      id: row.id,
-      brandId: row.brandId,
-      status: row.status as OpportunityStatus,
-      currency: row.currency,
-      budgetAmount: row.totalBudget,
-      reservedAt: row.reservedAt,
-      title: row.title,
-    };
-  }
-
-  if (type === 'CPM_DEAL') {
-    const row = await db.query.cpmDeals.findFirst({
-      where: and(eq(cpmDeals.id, id), isNull(cpmDeals.deletedAt)),
-    });
-    if (!row) throw opportunityError('OPPORTUNITY_NOT_FOUND', 'CPM deal not found');
-    return {
-      id: row.id,
-      brandId: row.brandId,
-      status: row.status as OpportunityStatus,
-      currency: row.currency,
-      budgetAmount: row.maxCampaignBudget,
-      reservedAt: row.reservedAt,
-      title: row.title,
-    };
-  }
-
-  const row = await db.query.contests.findFirst({
-    where: and(eq(contests.id, id), isNull(contests.deletedAt)),
-  });
-  if (!row) throw opportunityError('OPPORTUNITY_NOT_FOUND', 'Contest not found');
-  return {
-    id: row.id,
-    brandId: row.brandId,
-    status: row.status as OpportunityStatus,
-    currency: row.currency,
-    budgetAmount: row.totalContestBudget,
-    reservedAt: row.reservedAt,
-    title: row.title,
-  };
-}
 
 export function assertBrandOwnsOpportunity(
   session: SessionData,
@@ -215,7 +159,7 @@ async function applyTransition(
   }
 
   if (action === 'complete') {
-    await finalizeSpend(record.brandId, record.budgetAmount, record.currency, reference);
+    await releaseEscrowForOpportunity(type, id);
     await updateOpportunityStatus(type, id, nextStatus, { completedAt: new Date() });
     return formatOpportunity(type, id);
   }
@@ -310,5 +254,5 @@ export async function listPendingOpportunities(type?: OpportunityType) {
   return results;
 }
 
-export { loadOpportunity };
+export { loadOpportunity } from '@/opportunities/opportunity.loader';
 export { assertValidTransitionForTest } from '@/opportunities/lifecycle.helpers';

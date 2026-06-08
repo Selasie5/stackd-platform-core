@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import { brandWallets, brands, creators, kycApplications } from '@/db/schema/index';
+import { brandWallets, brands, creatorWallets, creators, kycApplications } from '@/db/schema/index';
 import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { InferSelectModel } from 'drizzle-orm';
 import { kycError } from '@/kyc/errors';
@@ -261,6 +261,13 @@ export async function reviewKyc(adminUserId: string, input: unknown) {
         kycApprovedAt: decision === 'approved' ? now : null,
       })
       .where(eq(creators.id, application.creatorId));
+
+    if (decision === 'approved') {
+      await db
+        .update(creatorWallets)
+        .set({ status: 'active' })
+        .where(eq(creatorWallets.creatorId, application.creatorId));
+    }
   }
 
   const notificationMap = {

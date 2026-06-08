@@ -188,6 +188,55 @@ export async function finalizeSpend(
   });
 }
 
+export async function spendFromReserved(
+  brandId: string,
+  amount: string,
+  currency: 'NGN' | 'GHS' | 'USD',
+  reference: WalletReference,
+): Promise<void> {
+  const spendAmount = parseAmount(amount);
+  if (spendAmount <= 0) return;
+
+  await db.transaction(async (tx) => {
+    const wallet = await tx.query.brandWallets.findFirst({
+      where: eq(brandWallets.brandId, brandId),
+    });
+
+    if (!wallet) {
+      throw opportunityError('WALLET_NOT_FOUND', 'Brand wallet not found');
+    }
+
+    const reserved = parseAmount(wallet.reservedBalance);
+    const totalSpent = parseAmount(wallet.totalSpent);
+    const newReserved = formatAmount(Math.max(0, reserved - spendAmount));
+    const newTotalSpent = formatAmount(totalSpent + spendAmount);
+
+    await tx
+      .update(brandWallets)
+      .set({
+        reservedBalance: newReserved,
+        totalSpent: newTotalSpent,
+        updatedAt: new Date(),
+      })
+      .where(eq(brandWallets.id, wallet.id));
+
+    await tx.insert(walletTransactions).values({
+      walletId: wallet.id,
+      brandId,
+      transactionType: 'debit',
+      amount: formatAmount(spendAmount),
+      currency,
+      balanceBefore: wallet.availableBalance,
+      balanceAfter: wallet.availableBalance,
+      reservedBefore: wallet.reservedBalance,
+      reservedAfter: newReserved,
+      description: reference.description,
+      referenceType: reference.referenceType,
+      referenceId: reference.referenceId,
+    });
+  });
+}
+
 export async function creditFunds(
   brandId: string,
   amount: string,

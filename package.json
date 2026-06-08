@@ -44,7 +44,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^4.1.8",
-    "drizzle-kit": "^0.30.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.0.0",
     "prettier": "^3.4.0",
     "tsc-alias": "^1.8.0",
