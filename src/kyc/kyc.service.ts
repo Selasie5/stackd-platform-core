@@ -1,13 +1,8 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import {
-  brandWallets,
-  brands,
-  creators,
-  kycApplications,
-  notifications,
-} from '@/db/schema/index';
+import { brandWallets, brands, creators, kycApplications } from '@/db/schema/index';
+import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { InferSelectModel } from 'drizzle-orm';
 import { kycError } from '@/kyc/errors';
 import type { KycReviewDecision, SubmitKycInput } from '@/kyc/types';
@@ -75,23 +70,6 @@ async function getProfileKycStatus(session: SessionData): Promise<{
   }
 
   throw kycError('KYC_NOT_FOUND', 'No KYC profile found for this account');
-}
-
-async function createNotification(
-  userId: string,
-  type: 'kyc_submitted' | 'kyc_approved' | 'kyc_rejected' | 'kyc_needs_more_info',
-  title: string,
-  body: string,
-  referenceId: string,
-) {
-  await db.insert(notifications).values({
-    userId,
-    type,
-    title,
-    body,
-    referenceType: 'kyc_application',
-    referenceId,
-  });
 }
 
 export async function getKycStatusForUser(userId: string, role: UserRole): Promise<string> {
@@ -178,13 +156,25 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
       .where(eq(creators.id, creator!.id));
   }
 
-  await createNotification(
+  const applicantName =
+    role === 'brand' ? brand!.brandName : creator!.fullName;
+
+  await notify({
     userId,
-    'kyc_submitted',
-    'KYC submitted',
-    'Your verification documents have been submitted and are under review.',
-    application.id,
-  );
+    type: 'kyc_submitted',
+    title: 'KYC submitted',
+    body: 'Your verification documents have been submitted and are under review.',
+    referenceType: 'kyc_application',
+    referenceId: application.id,
+  });
+
+  await notifyAdmins({
+    type: 'admin_kyc_pending_review',
+    title: 'New KYC submission',
+    body: `New KYC submission from ${applicantName} (${role}) — review required.`,
+    referenceType: 'kyc_application',
+    referenceId: application.id,
+  });
 
   return formatKycApplication(application);
 }
@@ -292,13 +282,14 @@ export async function reviewKyc(adminUserId: string, input: unknown) {
   };
 
   const notif = notificationMap[decision];
-  await createNotification(
-    application.userId,
-    notif.type,
-    notif.title,
-    notif.body,
-    application.id,
-  );
+  await notify({
+    userId: application.userId,
+    type: notif.type,
+    title: notif.title,
+    body: notif.body,
+    referenceType: 'kyc_application',
+    referenceId: application.id,
+  });
 
   return formatKycApplication(updated);
 }
