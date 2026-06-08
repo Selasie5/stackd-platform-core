@@ -80,7 +80,11 @@ export const submissionsResolvers = {
       const session = await requireBrandWriteAccess(ctx);
       return requestUgcRevision(session, submissionId, revisionNote);
     },
-    resubmitUgcSubmission: async (_: unknown, { input }: { input: unknown }, ctx: GraphQLContext) => {
+    resubmitUgcSubmission: async (
+      _: unknown,
+      { input }: { input: unknown },
+      ctx: GraphQLContext,
+    ) => {
       const session = await requireCreatorApplyAccess(ctx);
       return resubmitUgcSubmission(session, input);
     },
@@ -120,7 +124,11 @@ export const submissionsResolvers = {
       const session = await requireBrandWriteAccess(ctx);
       return approveCpmSubmission(session, submissionId);
     },
-    submitContestSubmission: async (_: unknown, { input }: { input: unknown }, ctx: GraphQLContext) => {
+    submitContestSubmission: async (
+      _: unknown,
+      { input }: { input: unknown },
+      ctx: GraphQLContext,
+    ) => {
       const session = await requireCreatorApplyAccess(ctx);
       return submitContestSubmission(session, input);
     },
@@ -132,7 +140,11 @@ export const submissionsResolvers = {
       const session = await requireBrandWriteAccess(ctx);
       return shortlistContestSubmission(session, submissionId);
     },
-    selectContestWinners: async (_: unknown, { input }: { input: unknown }, ctx: GraphQLContext) => {
+    selectContestWinners: async (
+      _: unknown,
+      { input }: { input: unknown },
+      ctx: GraphQLContext,
+    ) => {
       const session = await requireBrandWriteAccess(ctx);
       return selectContestWinners(session, input);
     },

@@ -101,7 +101,12 @@ export const applicationStatusEnum = pgEnum('application_status', [
   'withdrawn',
 ]);
 
-export const disputeStatusEnum = pgEnum('dispute_status', ['open', 'under_review', 'resolved', 'closed']);
+export const disputeStatusEnum = pgEnum('dispute_status', [
+  'open',
+  'under_review',
+  'resolved',
+  'closed',
+]);
 export const disputeRaisedByEnum = pgEnum('dispute_raised_by', ['brand', 'creator', 'admin']);
 
 export const notificationTypeEnum = pgEnum('notification_type', [
@@ -328,7 +333,9 @@ export const brandWallets = pgTable('brand_wallets', {
     .unique()
     .references(() => brands.id, { onDelete: 'cascade' }),
   currency: currencyEnum('currency').notNull(),
-  availableBalance: numeric('available_balance', { precision: 15, scale: 2 }).default('0').notNull(),
+  availableBalance: numeric('available_balance', { precision: 15, scale: 2 })
+    .default('0')
+    .notNull(),
   reservedBalance: numeric('reserved_balance', { precision: 15, scale: 2 }).default('0').notNull(),
   totalSpent: numeric('total_spent', { precision: 15, scale: 2 }).default('0').notNull(),
   /** frozen until brand KYC approved — prevents funding before verification */
@@ -374,7 +381,9 @@ export const creatorWallets = pgTable('creator_wallets', {
     .unique()
     .references(() => creators.id, { onDelete: 'cascade' }),
   currency: currencyEnum('currency').notNull(),
-  availableBalance: numeric('available_balance', { precision: 15, scale: 2 }).default('0').notNull(),
+  availableBalance: numeric('available_balance', { precision: 15, scale: 2 })
+    .default('0')
+    .notNull(),
   totalEarned: numeric('total_earned', { precision: 15, scale: 2 }).default('0').notNull(),
   totalWithdrawn: numeric('total_withdrawn', { precision: 15, scale: 2 }).default('0').notNull(),
   status: walletStatusEnum('status').default('frozen').notNull(),
@@ -879,16 +888,19 @@ export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
   wallet: one(creatorWallets, { fields: [withdrawals.walletId], references: [creatorWallets.id] }),
 }));
 
-export const creatorWalletTransactionsRelations = relations(creatorWalletTransactions, ({ one }) => ({
-  wallet: one(creatorWallets, {
-    fields: [creatorWalletTransactions.walletId],
-    references: [creatorWallets.id],
+export const creatorWalletTransactionsRelations = relations(
+  creatorWalletTransactions,
+  ({ one }) => ({
+    wallet: one(creatorWallets, {
+      fields: [creatorWalletTransactions.walletId],
+      references: [creatorWallets.id],
+    }),
+    creator: one(creators, {
+      fields: [creatorWalletTransactions.creatorId],
+      references: [creators.id],
+    }),
   }),
-  creator: one(creators, {
-    fields: [creatorWalletTransactions.creatorId],
-    references: [creators.id],
-  }),
-}));
+);
 
 export const brandWalletsRelations = relations(brandWallets, ({ one, many }) => ({
   brand: one(brands, { fields: [brandWallets.brandId], references: [brands.id] }),

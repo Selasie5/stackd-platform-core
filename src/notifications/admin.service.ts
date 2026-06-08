@@ -1,6 +1,14 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { contests, cpmDeals, disputes, kycApplications, notifications, ugcOrders, users } from '@/db/schema/index';
+import {
+  contests,
+  cpmDeals,
+  disputes,
+  kycApplications,
+  notifications,
+  ugcOrders,
+  users,
+} from '@/db/schema/index';
 
 export async function listActiveAdminUserIds(): Promise<string[]> {
   const admins = await db.query.users.findMany({

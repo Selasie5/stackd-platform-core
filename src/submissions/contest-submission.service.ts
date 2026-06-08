@@ -1,13 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import {
-  brands,
-  contestRewards,
-  contestSubmissions,
-  contests,
-  creators,
-} from '@/db/schema/index';
+import { brands, contestRewards, contestSubmissions, contests, creators } from '@/db/schema/index';
 import type { InferSelectModel } from 'drizzle-orm';
 import type { SessionData } from '@/auth/types';
 import { notify } from '@/notifications/notification.service';
@@ -88,7 +82,12 @@ export async function submitContestSubmission(session: SessionData, input: unkno
   if (!session.creatorId) throw submissionError('FORBIDDEN', 'Creator profile required');
   const data = submitSchema.parse(input);
 
-  if (!data.confirmedFollowsBrief || !data.confirmedOriginal || !data.confirmedNoFakeEngagement || !data.agreedToUsageRights) {
+  if (
+    !data.confirmedFollowsBrief ||
+    !data.confirmedOriginal ||
+    !data.confirmedNoFakeEngagement ||
+    !data.agreedToUsageRights
+  ) {
     throw submissionError('INVALID_STATUS', 'All contest confirmations are required');
   }
 
@@ -135,7 +134,9 @@ export async function submitContestSubmission(session: SessionData, input: unkno
 
 export async function shortlistContestSubmission(session: SessionData, submissionId: string) {
   const submission = await getSubmission(submissionId);
-  const contest = await db.query.contests.findFirst({ where: eq(contests.id, submission.contestId) });
+  const contest = await db.query.contests.findFirst({
+    where: eq(contests.id, submission.contestId),
+  });
   if (!contest) throw submissionError('SUBMISSION_NOT_FOUND', 'Contest not found');
   assertBrandOwnsOpportunity(session, contest.brandId);
 
@@ -146,7 +147,9 @@ export async function shortlistContestSubmission(session: SessionData, submissio
     .where(eq(contestSubmissions.id, submissionId))
     .returning();
 
-  const creator = await db.query.creators.findFirst({ where: eq(creators.id, submission.creatorId) });
+  const creator = await db.query.creators.findFirst({
+    where: eq(creators.id, submission.creatorId),
+  });
   if (creator) {
     await notify({
       userId: creator.userId,
@@ -185,7 +188,10 @@ export async function selectContestWinners(session: SessionData, input: unknown)
 
     const reward = rewardByPlacement.get(winner.placement);
     if (!reward) {
-      throw submissionError('INVALID_STATUS', `No reward configured for placement ${winner.placement}`);
+      throw submissionError(
+        'INVALID_STATUS',
+        `No reward configured for placement ${winner.placement}`,
+      );
     }
 
     const [updated] = await db
@@ -210,7 +216,9 @@ export async function selectContestWinners(session: SessionData, input: unknown)
       currency: reward.currency,
     });
 
-    const creator = await db.query.creators.findFirst({ where: eq(creators.id, submission.creatorId) });
+    const creator = await db.query.creators.findFirst({
+      where: eq(creators.id, submission.creatorId),
+    });
     if (creator) {
       await notify({
         userId: creator.userId,

@@ -1,0 +1,50 @@
+# Optional VPS reference — NOT used on PaaS (Render/Railway/Fly handle TLS).
+#
+# Usage: place behind Docker container on port 4000.
+# Replace api.spleenet.com with your domain and configure certbot for TLS.
+
+upstream spleenet_api {
+    server 127.0.0.1:4000;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name api.spleenet.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.spleenet.com;
+
+    # ssl_certificate /etc/letsencrypt/live/api.spleenet.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/api.spleenet.com/privkey.pem;
+
+    client_max_body_size 10m;
+
+    location /webhooks/paystack {
+        proxy_pass http://spleenet_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Paystack webhooks require raw body — do not buffer/transform
+        proxy_request_buffering off;
+    }
+
+    location / {
+        proxy_pass http://spleenet_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

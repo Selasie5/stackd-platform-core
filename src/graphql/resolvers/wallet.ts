@@ -1,9 +1,6 @@
 import type { GraphQLContext } from '@/graphql/context';
 import { requireAdmin, requireBrandWriteAccess, requireCreatorApplyAccess } from '@/kyc/guards';
-import {
-  getMyBrandWallet,
-  initializeWalletTopUp,
-} from '@/payments/wallet-funding.service';
+import { getMyBrandWallet, initializeWalletTopUp } from '@/payments/wallet-funding.service';
 import {
   getMyCreatorWallet,
   listAdminPayments,
@@ -134,11 +131,7 @@ export const walletResolvers = {
       const session = await requireCreatorApplyAccess(ctx);
       return updatePaymentDetails(session, input);
     },
-    requestWithdrawal: async (
-      _: unknown,
-      { amount }: { amount: string },
-      ctx: GraphQLContext,
-    ) => {
+    requestWithdrawal: async (_: unknown, { amount }: { amount: string }, ctx: GraphQLContext) => {
       const session = await requireCreatorApplyAccess(ctx);
       return requestWithdrawal(session, amount);
     },

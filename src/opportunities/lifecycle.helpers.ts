@@ -1,4 +1,8 @@
-import { getTargetStatus, type LifecycleAction, type OpportunityStatus } from '@/opportunities/types';
+import {
+  getTargetStatus,
+  type LifecycleAction,
+  type OpportunityStatus,
+} from '@/opportunities/types';
 import { opportunityError } from '@/opportunities/errors';
 
 export function assertValidTransitionForTest(

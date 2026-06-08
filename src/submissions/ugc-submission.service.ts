@@ -78,7 +78,13 @@ async function notifyBrandOfSubmission(orderId: string, submissionId: string) {
   });
 }
 
-async function notifyCreator(creatorId: string, type: 'revision_requested' | 'video_approved', title: string, body: string, referenceId: string) {
+async function notifyCreator(
+  creatorId: string,
+  type: 'revision_requested' | 'video_approved',
+  title: string,
+  body: string,
+  referenceId: string,
+) {
   const creator = await db.query.creators.findFirst({ where: eq(creators.id, creatorId) });
   if (!creator) return;
   await notify({
@@ -122,7 +128,9 @@ export async function requestUgcRevision(
   revisionNote: string,
 ) {
   const submission = await getSubmission(submissionId);
-  const order = await db.query.ugcOrders.findFirst({ where: eq(ugcOrders.id, submission.ugcOrderId) });
+  const order = await db.query.ugcOrders.findFirst({
+    where: eq(ugcOrders.id, submission.ugcOrderId),
+  });
   if (!order) throw submissionError('SUBMISSION_NOT_FOUND', 'Order not found');
   assertBrandOwnsOpportunity(session, order.brandId);
 
@@ -186,7 +194,9 @@ export async function resubmitUgcSubmission(session: SessionData, input: unknown
 
 export async function approveUgcSubmission(session: SessionData, submissionId: string) {
   const submission = await getSubmission(submissionId);
-  const order = await db.query.ugcOrders.findFirst({ where: eq(ugcOrders.id, submission.ugcOrderId) });
+  const order = await db.query.ugcOrders.findFirst({
+    where: eq(ugcOrders.id, submission.ugcOrderId),
+  });
   if (!order) throw submissionError('SUBMISSION_NOT_FOUND', 'Order not found');
   assertBrandOwnsOpportunity(session, order.brandId);
 
@@ -241,7 +251,9 @@ export async function approveUgcSubmission(session: SessionData, submissionId: s
 
 export async function rejectUgcSubmission(session: SessionData, submissionId: string) {
   const submission = await getSubmission(submissionId);
-  const order = await db.query.ugcOrders.findFirst({ where: eq(ugcOrders.id, submission.ugcOrderId) });
+  const order = await db.query.ugcOrders.findFirst({
+    where: eq(ugcOrders.id, submission.ugcOrderId),
+  });
   if (!order) throw submissionError('SUBMISSION_NOT_FOUND', 'Order not found');
   assertBrandOwnsOpportunity(session, order.brandId);
 

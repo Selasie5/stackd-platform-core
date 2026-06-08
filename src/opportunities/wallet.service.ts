@@ -45,7 +45,10 @@ export async function reserveFunds(
     }
 
     if (wallet.status !== 'active') {
-      throw opportunityError('WALLET_FROZEN', 'Wallet must be active before launching opportunities');
+      throw opportunityError(
+        'WALLET_FROZEN',
+        'Wallet must be active before launching opportunities',
+      );
     }
 
     if (wallet.currency !== currency) {

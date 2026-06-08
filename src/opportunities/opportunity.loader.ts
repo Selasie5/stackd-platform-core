@@ -14,7 +14,10 @@ export interface OpportunityRecord {
   title: string;
 }
 
-export async function loadOpportunity(type: OpportunityType, id: string): Promise<OpportunityRecord> {
+export async function loadOpportunity(
+  type: OpportunityType,
+  id: string,
+): Promise<OpportunityRecord> {
   if (type === 'UGC_ORDER') {
     const row = await db.query.ugcOrders.findFirst({
       where: and(eq(ugcOrders.id, id), isNull(ugcOrders.deletedAt)),

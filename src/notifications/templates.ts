@@ -7,7 +7,12 @@ const ADMIN_TYPES: NotificationType[] = [
 ];
 
 export function shouldSendEmail(type: NotificationType): boolean {
-  return ADMIN_TYPES.includes(type) || type.startsWith('kyc_') || type === 'payment_paid' || type === 'payment_ready';
+  return (
+    ADMIN_TYPES.includes(type) ||
+    type.startsWith('kyc_') ||
+    type === 'payment_paid' ||
+    type === 'payment_ready'
+  );
 }
 
 export function shouldSendPush(type: NotificationType): boolean {

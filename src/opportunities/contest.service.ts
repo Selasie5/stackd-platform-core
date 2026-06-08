@@ -1,11 +1,7 @@
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import {
-  contestReferenceLinks,
-  contestRewards,
-  contests,
-} from '@/db/schema/index';
+import { contestReferenceLinks, contestRewards, contests } from '@/db/schema/index';
 import type { InferSelectModel } from 'drizzle-orm';
 import { opportunityError } from '@/opportunities/errors';
 import type {
@@ -62,8 +58,14 @@ const contestInputSchema = z.object({
   productDeliveryDetails: z.string().optional(),
   totalContestBudget: z.string().regex(/^\d+(\.\d{1,2})?$/),
   currency: currencySchema,
-  cpmBudget: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
-  payPer1000Views: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+  cpmBudget: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
+  payPer1000Views: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
   maxPayableViewsPerCreator: z.number().int().positive().optional(),
   minimumWinners: z.number().int().positive().optional(),
   submissionDeadline: z.string().datetime(),

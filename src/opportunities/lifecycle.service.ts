@@ -210,11 +210,7 @@ export async function cancelOpportunity(session: SessionData, type: OpportunityT
   return applyTransition(session, type, id, 'cancel');
 }
 
-export async function completeOpportunity(
-  session: SessionData,
-  type: OpportunityType,
-  id: string,
-) {
+export async function completeOpportunity(session: SessionData, type: OpportunityType, id: string) {
   const record = await loadOpportunity(type, id);
   assertBrandOwnsOpportunity(session, record.brandId, true);
 

@@ -92,9 +92,7 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
   const data = submitKycSchema.parse(input) as SubmitKycInput;
 
   const brand =
-    role === 'brand'
-      ? await db.query.brands.findFirst({ where: eq(brands.userId, userId) })
-      : null;
+    role === 'brand' ? await db.query.brands.findFirst({ where: eq(brands.userId, userId) }) : null;
   const creator =
     role === 'creator'
       ? await db.query.creators.findFirst({ where: eq(creators.userId, userId) })
@@ -113,10 +111,7 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
   }
 
   const currentApplication = await db.query.kycApplications.findFirst({
-    where: and(
-      eq(kycApplications.userId, userId),
-      eq(kycApplications.isCurrent, true),
-    ),
+    where: and(eq(kycApplications.userId, userId), eq(kycApplications.isCurrent, true)),
   });
 
   const attemptNumber = currentApplication ? currentApplication.attemptNumber + 1 : 1;
@@ -145,10 +140,7 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
     .returning();
 
   if (role === 'brand') {
-    await db
-      .update(brands)
-      .set({ kycStatus: 'pending_review' })
-      .where(eq(brands.id, brand!.id));
+    await db.update(brands).set({ kycStatus: 'pending_review' }).where(eq(brands.id, brand!.id));
   } else {
     await db
       .update(creators)
@@ -156,8 +148,7 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
       .where(eq(creators.id, creator!.id));
   }
 
-  const applicantName =
-    role === 'brand' ? brand!.brandName : creator!.fullName;
+  const applicantName = role === 'brand' ? brand!.brandName : creator!.fullName;
 
   await notify({
     userId,
@@ -279,7 +270,9 @@ export async function reviewKyc(adminUserId: string, input: unknown) {
     rejected: {
       type: 'kyc_rejected' as const,
       title: 'KYC rejected',
-      body: data.rejectionReason ?? 'Your verification was rejected. You may resubmit with corrected documents.',
+      body:
+        data.rejectionReason ??
+        'Your verification was rejected. You may resubmit with corrected documents.',
     },
     needs_more_info: {
       type: 'kyc_needs_more_info' as const,

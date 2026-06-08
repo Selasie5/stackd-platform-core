@@ -91,7 +91,10 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
   return rows.length;
 }
 
-export async function markNotificationRead(userId: string, notificationId: string): Promise<NotificationRow> {
+export async function markNotificationRead(
+  userId: string,
+  notificationId: string,
+): Promise<NotificationRow> {
   const row = await db.query.notifications.findFirst({
     where: and(eq(notifications.id, notificationId), eq(notifications.userId, userId)),
   });
