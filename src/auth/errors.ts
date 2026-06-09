@@ -9,7 +9,9 @@ export type AuthErrorCode =
   | 'USER_NOT_FOUND'
   | 'INVALID_TOKEN'
   | 'ACCOUNT_SUSPENDED'
-  | 'RATE_LIMITED';
+  | 'RATE_LIMITED'
+  | 'INVALID_OTP'
+  | 'OTP_ATTEMPTS_EXCEEDED';
 
 export function authError(code: AuthErrorCode, message: string): GraphQLError {
   return new GraphQLError(message, { extensions: { code } });

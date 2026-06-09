@@ -108,47 +108,65 @@ async function getWalletOwnerUserId(
   return creator.userId;
 }
 
-export async function freezeWallet(_session: SessionData, input: unknown) {
-  const data = walletActionSchema.parse(input);
-
-  if (data.profileType === 'brand') {
+export async function setWalletStatus(
+  profileType: WalletProfileType,
+  profileId: string,
+  status: 'active' | 'frozen',
+  reason: string,
+  options?: { skipAlreadyCheck?: boolean },
+): Promise<void> {
+  if (profileType === 'brand') {
     const wallet = await db.query.brandWallets.findFirst({
-      where: eq(brandWallets.brandId, data.profileId),
+      where: eq(brandWallets.brandId, profileId),
     });
     if (!wallet) throw adminError('NOT_FOUND', 'Brand wallet not found');
-    if (wallet.status === 'frozen') {
-      throw adminError('INVALID_STATUS', 'Wallet is already frozen');
+    if (!options?.skipAlreadyCheck) {
+      if (status === 'frozen' && wallet.status === 'frozen') {
+        throw adminError('INVALID_STATUS', 'Wallet is already frozen');
+      }
+      if (status === 'active' && wallet.status !== 'frozen') {
+        throw adminError('INVALID_STATUS', 'Wallet is not frozen');
+      }
     }
 
     await db
       .update(brandWallets)
-      .set({ status: 'frozen', updatedAt: new Date() })
+      .set({ status, updatedAt: new Date() })
       .where(eq(brandWallets.id, wallet.id));
   } else {
     const wallet = await db.query.creatorWallets.findFirst({
-      where: eq(creatorWallets.creatorId, data.profileId),
+      where: eq(creatorWallets.creatorId, profileId),
     });
     if (!wallet) throw adminError('NOT_FOUND', 'Creator wallet not found');
-    if (wallet.status === 'frozen') {
-      throw adminError('INVALID_STATUS', 'Wallet is already frozen');
+    if (!options?.skipAlreadyCheck) {
+      if (status === 'frozen' && wallet.status === 'frozen') {
+        throw adminError('INVALID_STATUS', 'Wallet is already frozen');
+      }
+      if (status === 'active' && wallet.status !== 'frozen') {
+        throw adminError('INVALID_STATUS', 'Wallet is not frozen');
+      }
     }
 
     await db
       .update(creatorWallets)
-      .set({ status: 'frozen', updatedAt: new Date() })
+      .set({ status, updatedAt: new Date() })
       .where(eq(creatorWallets.id, wallet.id));
   }
 
-  const userId = await getWalletOwnerUserId(data.profileType, data.profileId);
+  const userId = await getWalletOwnerUserId(profileType, profileId);
   await notify({
     userId,
-    type: 'wallet_frozen',
-    title: 'Wallet frozen',
-    body: data.reason,
-    referenceType: data.profileType === 'brand' ? 'brand' : 'creator',
-    referenceId: data.profileId,
+    type: status === 'frozen' ? 'wallet_frozen' : 'wallet_unfrozen',
+    title: status === 'frozen' ? 'Wallet frozen' : 'Wallet unfrozen',
+    body: reason,
+    referenceType: profileType === 'brand' ? 'brand' : 'creator',
+    referenceId: profileId,
   });
+}
 
+export async function freezeWallet(_session: SessionData, input: unknown) {
+  const data = walletActionSchema.parse(input);
+  await setWalletStatus(data.profileType, data.profileId, 'frozen', data.reason);
   return data.profileType === 'brand'
     ? getAdminBrandWallet(data.profileId)
     : getAdminCreatorWallet(data.profileId);
@@ -156,45 +174,7 @@ export async function freezeWallet(_session: SessionData, input: unknown) {
 
 export async function unfreezeWallet(_session: SessionData, input: unknown) {
   const data = walletActionSchema.parse(input);
-
-  if (data.profileType === 'brand') {
-    const wallet = await db.query.brandWallets.findFirst({
-      where: eq(brandWallets.brandId, data.profileId),
-    });
-    if (!wallet) throw adminError('NOT_FOUND', 'Brand wallet not found');
-    if (wallet.status !== 'frozen') {
-      throw adminError('INVALID_STATUS', 'Wallet is not frozen');
-    }
-
-    await db
-      .update(brandWallets)
-      .set({ status: 'active', updatedAt: new Date() })
-      .where(eq(brandWallets.id, wallet.id));
-  } else {
-    const wallet = await db.query.creatorWallets.findFirst({
-      where: eq(creatorWallets.creatorId, data.profileId),
-    });
-    if (!wallet) throw adminError('NOT_FOUND', 'Creator wallet not found');
-    if (wallet.status !== 'frozen') {
-      throw adminError('INVALID_STATUS', 'Wallet is not frozen');
-    }
-
-    await db
-      .update(creatorWallets)
-      .set({ status: 'active', updatedAt: new Date() })
-      .where(eq(creatorWallets.id, wallet.id));
-  }
-
-  const userId = await getWalletOwnerUserId(data.profileType, data.profileId);
-  await notify({
-    userId,
-    type: 'wallet_unfrozen',
-    title: 'Wallet unfrozen',
-    body: data.reason,
-    referenceType: data.profileType === 'brand' ? 'brand' : 'creator',
-    referenceId: data.profileId,
-  });
-
+  await setWalletStatus(data.profileType, data.profileId, 'active', data.reason);
   return data.profileType === 'brand'
     ? getAdminBrandWallet(data.profileId)
     : getAdminCreatorWallet(data.profileId);

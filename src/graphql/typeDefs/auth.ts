@@ -76,5 +76,7 @@ export const authTypeDefs = `#graphql
     logout: Boolean!
     verifyEmail(token: String!): AuthPayload!
     resendVerificationEmail(email: String!): Boolean!
+    requestPasswordReset(email: String!): Boolean!
+    resetPassword(email: String!, otp: String!, newPassword: String!): Boolean!
   }
 `;

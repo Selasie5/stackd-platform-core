@@ -28,3 +28,26 @@ export async function sendVerificationEmail(email: string, token: string): Promi
     throw new Error('Failed to send verification email');
   }
 }
+
+export async function sendPasswordResetOtpEmail(email: string, otp: string): Promise<void> {
+  if (!resend || config.NODE_ENV === 'development') {
+    console.log(`[Email] Password reset OTP for ${email}: ${otp}`);
+    if (!resend) return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: config.EMAIL_FROM,
+    to: email,
+    subject: 'Your Splennet password reset code',
+    html: `
+      <p>You requested a password reset for your Splennet account.</p>
+      <p>Your verification code is: <strong>${otp}</strong></p>
+      <p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>
+    `,
+  });
+
+  if (error) {
+    console.error('[Email] Failed to send password reset OTP:', error);
+    throw new Error('Failed to send password reset email');
+  }
+}

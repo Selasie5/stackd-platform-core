@@ -13,6 +13,10 @@ import {
   listAdminPaystackEvents,
   freezeWallet,
   unfreezeWallet,
+  suspendBrand,
+  restoreBrand,
+  suspendCreator,
+  restoreCreator,
 } from '@/admin/index';
 import { listAdminKycApplications } from '@/kyc/kyc.service';
 import { listAdminOpportunities } from '@/opportunities/lifecycle.service';
@@ -170,6 +174,38 @@ export const adminResolvers = {
     ) => {
       const session = requireAdmin(ctx);
       return unfreezeWallet(session, input);
+    },
+    suspendBrand: async (
+      _: unknown,
+      { brandId, reason }: { brandId: string; reason: string },
+      ctx: GraphQLContext,
+    ) => {
+      const session = requireAdmin(ctx);
+      return suspendBrand(session, brandId, reason);
+    },
+    restoreBrand: async (
+      _: unknown,
+      { brandId, reason }: { brandId: string; reason: string },
+      ctx: GraphQLContext,
+    ) => {
+      const session = requireAdmin(ctx);
+      return restoreBrand(session, brandId, reason);
+    },
+    suspendCreator: async (
+      _: unknown,
+      { creatorId, reason }: { creatorId: string; reason: string },
+      ctx: GraphQLContext,
+    ) => {
+      const session = requireAdmin(ctx);
+      return suspendCreator(session, creatorId, reason);
+    },
+    restoreCreator: async (
+      _: unknown,
+      { creatorId, reason }: { creatorId: string; reason: string },
+      ctx: GraphQLContext,
+    ) => {
+      const session = requireAdmin(ctx);
+      return restoreCreator(session, creatorId, reason);
     },
   },
 };

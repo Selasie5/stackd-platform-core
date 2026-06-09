@@ -202,5 +202,9 @@ export const adminTypeDefs = `#graphql
     updateUserStatus(userId: ID!, status: UserStatus!, reason: String): AdminUserDetail!
     freezeWallet(input: FreezeWalletInput!): AdminWalletActionResult!
     unfreezeWallet(input: FreezeWalletInput!): AdminWalletActionResult!
+    suspendBrand(brandId: ID!, reason: String!): AdminBrandSummary!
+    restoreBrand(brandId: ID!, reason: String!): AdminBrandSummary!
+    suspendCreator(creatorId: ID!, reason: String!): AdminCreatorSummary!
+    restoreCreator(creatorId: ID!, reason: String!): AdminCreatorSummary!
   }
 `;
