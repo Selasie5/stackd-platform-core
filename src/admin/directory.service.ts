@@ -132,7 +132,25 @@ export async function listAdminBrands(filters: {
     limit,
   });
 
-  return rows.map((row) => ({
+  return rows.map(formatAdminBrandRow);
+}
+
+function formatAdminBrandRow(row: {
+  id: string;
+  userId: string;
+  brandName: string;
+  country: string;
+  kycStatus: string;
+  createdAt: Date;
+  user: { email: string };
+  wallet?: {
+    status: string;
+    availableBalance: string;
+    reservedBalance: string;
+    currency: string;
+  } | null;
+}) {
+  return {
     id: row.id,
     userId: row.userId,
     email: row.user.email,
@@ -144,7 +162,19 @@ export async function listAdminBrands(filters: {
     reservedBalance: row.wallet?.reservedBalance ?? null,
     currency: row.wallet?.currency ?? null,
     createdAt: row.createdAt.toISOString(),
-  }));
+  };
+}
+
+export async function getAdminBrand(brandId: string) {
+  const row = await db.query.brands.findFirst({
+    where: and(eq(brands.id, brandId), isNull(brands.deletedAt)),
+    with: {
+      user: { columns: { email: true } },
+      wallet: true,
+    },
+  });
+  if (!row) throw adminError('NOT_FOUND', 'Brand not found');
+  return formatAdminBrandRow(row);
 }
 
 export async function listAdminCreators(filters: {
@@ -174,7 +204,25 @@ export async function listAdminCreators(filters: {
     limit,
   });
 
-  return rows.map((row) => ({
+  return rows.map(formatAdminCreatorRow);
+}
+
+function formatAdminCreatorRow(row: {
+  id: string;
+  userId: string;
+  fullName: string;
+  country: string | null;
+  kycStatus: string;
+  createdAt: Date;
+  user: { email: string };
+  wallet?: {
+    status: string;
+    availableBalance: string;
+    totalEarned: string;
+    currency: string;
+  } | null;
+}) {
+  return {
     id: row.id,
     userId: row.userId,
     email: row.user.email,
@@ -186,5 +234,17 @@ export async function listAdminCreators(filters: {
     totalEarned: row.wallet?.totalEarned ?? null,
     currency: row.wallet?.currency ?? null,
     createdAt: row.createdAt.toISOString(),
-  }));
+  };
+}
+
+export async function getAdminCreator(creatorId: string) {
+  const row = await db.query.creators.findFirst({
+    where: and(eq(creators.id, creatorId), isNull(creators.deletedAt)),
+    with: {
+      user: { columns: { email: true } },
+      wallet: true,
+    },
+  });
+  if (!row) throw adminError('NOT_FOUND', 'Creator not found');
+  return formatAdminCreatorRow(row);
 }

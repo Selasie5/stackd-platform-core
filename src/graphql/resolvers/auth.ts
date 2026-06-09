@@ -8,6 +8,7 @@ import {
   verifyEmail,
   getMe,
 } from '@/auth/auth.service';
+import { requestPasswordReset, resetPassword } from '@/auth/password-reset.service';
 import { setSessionCookie, clearSessionCookie } from '@/auth/cookies';
 import { requireAuth } from '@/auth/guards';
 import type { GraphQLContext } from '@/graphql/context';
@@ -51,6 +52,15 @@ export const authResolvers = {
     },
     resendVerificationEmail: async (_: unknown, { email }: { email: string }) => {
       return resendVerificationEmail(email);
+    },
+    requestPasswordReset: async (_: unknown, { email }: { email: string }) => {
+      return requestPasswordReset(email);
+    },
+    resetPassword: async (
+      _: unknown,
+      { email, otp, newPassword }: { email: string; otp: string; newPassword: string },
+    ) => {
+      return resetPassword({ email, otp, newPassword });
     },
   },
 };

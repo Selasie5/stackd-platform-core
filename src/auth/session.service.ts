@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { sessions } from '@/db/schema/index';
 import { redisClient } from '@/queues/client';
@@ -36,4 +36,20 @@ export async function getSession(token: string): Promise<SessionData | null> {
 export async function revokeSession(token: string): Promise<void> {
   await redisClient.del(buildSessionKey(token));
   await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.token, token));
+}
+
+export async function revokeAllSessionsForUser(userId: string): Promise<void> {
+  const activeSessions = await db.query.sessions.findMany({
+    where: and(eq(sessions.userId, userId), isNull(sessions.revokedAt)),
+    columns: { token: true },
+  });
+
+  for (const session of activeSessions) {
+    await redisClient.del(buildSessionKey(session.token));
+  }
+
+  await db
+    .update(sessions)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
 }

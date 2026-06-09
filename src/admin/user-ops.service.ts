@@ -13,19 +13,29 @@ const updateUserStatusSchema = z.object({
   reason: z.string().optional(),
 });
 
-export async function updateUserStatus(session: SessionData, input: unknown) {
-  const data = updateUserStatusSchema.parse(input);
+export interface ApplyUserStatusChangeInput {
+  userId: string;
+  status: 'active' | 'suspended' | 'banned';
+  reason?: string;
+  skipAdminChecks?: boolean;
+}
 
-  if (data.userId === session.userId) {
-    throw adminError('FORBIDDEN', 'You cannot change your own account status');
+export async function applyUserStatusChange(
+  session: SessionData,
+  input: ApplyUserStatusChangeInput,
+): Promise<void> {
+  if (!input.skipAdminChecks) {
+    if (input.userId === session.userId) {
+      throw adminError('FORBIDDEN', 'You cannot change your own account status');
+    }
   }
 
   const user = await db.query.users.findFirst({
-    where: and(eq(users.id, data.userId), isNull(users.deletedAt)),
+    where: and(eq(users.id, input.userId), isNull(users.deletedAt)),
   });
 
   if (!user) throw adminError('NOT_FOUND', 'User not found');
-  if (user.role === 'admin') {
+  if (!input.skipAdminChecks && user.role === 'admin') {
     throw adminError('CANNOT_MODIFY_ADMIN', 'Cannot change status of admin accounts');
   }
 
@@ -36,29 +46,41 @@ export async function updateUserStatus(session: SessionData, input: unknown) {
 
   await db
     .update(users)
-    .set({ status: data.status, updatedAt: new Date() })
-    .where(eq(users.id, data.userId));
+    .set({ status: input.status, updatedAt: new Date() })
+    .where(eq(users.id, input.userId));
 
-  if (data.status === 'suspended' || data.status === 'banned') {
+  if (input.status === 'suspended' || input.status === 'banned') {
     await db
       .update(sessions)
       .set({ revokedAt: new Date() })
-      .where(and(eq(sessions.userId, data.userId), isNull(sessions.revokedAt)));
+      .where(and(eq(sessions.userId, input.userId), isNull(sessions.revokedAt)));
   }
 
   const statusLabel =
-    data.status === 'active' ? 'reactivated' : data.status === 'suspended' ? 'suspended' : 'banned';
+    input.status === 'active'
+      ? 'reactivated'
+      : input.status === 'suspended'
+        ? 'suspended'
+        : 'banned';
 
   await notify({
-    userId: data.userId,
+    userId: input.userId,
     type: 'account_status_changed',
     title: 'Account status updated',
-    body: data.reason
-      ? `Your account has been ${statusLabel}: ${data.reason}`
+    body: input.reason
+      ? `Your account has been ${statusLabel}: ${input.reason}`
       : `Your account has been ${statusLabel}.`,
     referenceType: 'user',
-    referenceId: data.userId,
+    referenceId: input.userId,
   });
+}
 
+export async function updateUserStatus(session: SessionData, input: unknown) {
+  const data = updateUserStatusSchema.parse(input);
+  await applyUserStatusChange(session, {
+    userId: data.userId,
+    status: data.status,
+    reason: data.reason,
+  });
   return getAdminUser(data.userId);
 }

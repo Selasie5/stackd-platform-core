@@ -13,7 +13,13 @@ export async function findEmailVerifyToken(email: string): Promise<string | null
 }
 
 export async function flushTestRedisKeys(): Promise<void> {
-  const patterns = ['email_verify:*', 'resend_verify:*', 'session:*'];
+  const patterns = [
+    'email_verify:*',
+    'resend_verify:*',
+    'password_reset_request:*',
+    'password_reset_otp:*',
+    'session:*',
+  ];
   for (const pattern of patterns) {
     const keys = await redisClient.keys(pattern);
     if (keys.length > 0) {
