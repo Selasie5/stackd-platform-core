@@ -27,6 +27,7 @@ export const notificationsTypeDefs = `#graphql
     admin_kyc_pending_review
     admin_campaign_pending_review
     admin_dispute_opened
+    message_received
   }
 
   type Notification {

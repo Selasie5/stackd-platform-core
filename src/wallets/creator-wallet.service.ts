@@ -151,6 +151,53 @@ export async function debitCreatorWallet(
   });
 }
 
+export async function debitCreatorBalanceAdjustment(
+  creatorId: string,
+  amount: string,
+  currency: 'NGN' | 'GHS' | 'USD',
+  reference: CreatorWalletReference,
+): Promise<void> {
+  const debitAmount = parseAmount(amount);
+  if (debitAmount <= 0) return;
+
+  await db.transaction(async (tx) => {
+    const wallet = await tx.query.creatorWallets.findFirst({
+      where: eq(creatorWallets.creatorId, creatorId),
+    });
+    if (!wallet) {
+      throw opportunityError('WALLET_NOT_FOUND', 'Creator wallet not found');
+    }
+    if (wallet.currency !== currency) {
+      throw opportunityError('INVALID_STATUS', 'Currency must match creator wallet');
+    }
+
+    const available = parseAmount(wallet.availableBalance);
+    if (available < debitAmount) {
+      throw opportunityError('INSUFFICIENT_WALLET_BALANCE', 'Insufficient creator wallet balance');
+    }
+
+    const newAvailable = formatAmount(available - debitAmount);
+
+    await tx
+      .update(creatorWallets)
+      .set({ availableBalance: newAvailable, updatedAt: new Date() })
+      .where(eq(creatorWallets.id, wallet.id));
+
+    await tx.insert(creatorWalletTransactions).values({
+      walletId: wallet.id,
+      creatorId,
+      transactionType: 'adjustment',
+      amount: formatAmount(debitAmount),
+      currency,
+      balanceBefore: wallet.availableBalance,
+      balanceAfter: newAvailable,
+      description: reference.description,
+      referenceType: reference.referenceType,
+      referenceId: reference.referenceId,
+    });
+  });
+}
+
 export async function reverseCreatorPayout(
   creatorId: string,
   amount: string,

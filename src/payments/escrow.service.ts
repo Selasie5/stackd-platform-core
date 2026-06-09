@@ -35,7 +35,7 @@ export async function getAllocatedAmountForOpportunity(opportunityId: string): P
   const rows = await db.query.payments.findMany({
     where: and(
       eq(payments.opportunityId, opportunityId),
-      inArray(payments.status, ['in_escrow', 'ready_for_payout', 'paid']),
+      inArray(payments.status, ['in_escrow', 'ready_for_payout', 'paid', 'disputed']),
     ),
     columns: { amount: true },
   });
@@ -71,7 +71,7 @@ export async function allocateEscrow(input: AllocateEscrowInput): Promise<void> 
     where: and(
       eq(payments.referenceType, input.submissionType),
       eq(payments.referenceId, input.submissionId),
-      inArray(payments.status, ['in_escrow', 'ready_for_payout', 'paid']),
+      inArray(payments.status, ['in_escrow', 'ready_for_payout', 'paid', 'disputed']),
     ),
   });
   if (existing) {
@@ -104,6 +104,12 @@ export async function releaseEscrowForOpportunity(
   const escrowPayments = await db.query.payments.findMany({
     where: and(eq(payments.opportunityId, opportunityId), eq(payments.status, 'in_escrow')),
   });
+
+  const disputedPayments = await db.query.payments.findMany({
+    where: and(eq(payments.opportunityId, opportunityId), eq(payments.status, 'disputed')),
+    columns: { amount: true },
+  });
+  const disputedHeld = disputedPayments.reduce((sum, p) => sum + parseAmount(p.amount), 0);
 
   const totalRelease = escrowPayments.reduce((sum, p) => sum + parseAmount(p.amount), 0);
 
@@ -140,11 +146,60 @@ export async function releaseEscrowForOpportunity(
   }
 
   const budget = parseAmount(record.budgetAmount);
-  const unused = Math.max(0, budget - totalRelease);
+  const unused = Math.max(0, budget - totalRelease - disputedHeld);
   if (unused > 0) {
     await releaseFunds(record.brandId, formatAmount(unused), record.currency, {
       ...reference,
       description: `Return unused campaign budget for ${record.title}`,
     });
   }
+}
+
+export async function releaseSingleEscrowPayment(paymentId: string): Promise<void> {
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+  });
+  if (!payment || payment.status !== 'in_escrow') return;
+
+  const opportunityType =
+    payment.opportunityType === 'ugc_order'
+      ? 'UGC_ORDER'
+      : payment.opportunityType === 'cpm_deal'
+        ? 'CPM_DEAL'
+        : 'CONTEST';
+
+  const record = await loadOpportunity(opportunityType, payment.opportunityId);
+  const reference = {
+    referenceType: OPPORTUNITY_TYPE_MAP[opportunityType] as 'ugc_order' | 'cpm_deal' | 'contest',
+    referenceId: payment.opportunityId,
+    description: `Release escrow for ${record.title}`,
+  };
+
+  await creditCreatorWallet(payment.creatorId, payment.amount, payment.currency, {
+    referenceType: 'payment',
+    referenceId: payment.id,
+    description: `Escrow release for ${record.title}`,
+  });
+
+  await db
+    .update(payments)
+    .set({ status: 'ready_for_payout', updatedAt: new Date() })
+    .where(eq(payments.id, payment.id));
+
+  const creator = await db.query.creators.findFirst({
+    where: eq(creators.id, payment.creatorId),
+    columns: { userId: true },
+  });
+  if (creator) {
+    await notify({
+      userId: creator.userId,
+      type: 'payment_ready',
+      title: 'Earnings available',
+      body: `Your earnings of ${payment.currency} ${payment.amount} from "${record.title}" are now in your wallet.`,
+      referenceType: 'payment',
+      referenceId: payment.id,
+    });
+  }
+
+  await spendFromReserved(record.brandId, payment.amount, payment.currency, reference);
 }

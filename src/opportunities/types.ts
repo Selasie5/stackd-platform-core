@@ -38,7 +38,7 @@ export interface ContestRewardInput {
 }
 
 export interface WalletReference {
-  referenceType: 'ugc_order' | 'cpm_deal' | 'contest' | 'wallet_topup' | 'withdrawal';
+  referenceType: 'ugc_order' | 'cpm_deal' | 'contest' | 'wallet_topup' | 'withdrawal' | 'dispute';
   referenceId: string;
   description: string;
 }

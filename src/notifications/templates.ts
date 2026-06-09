@@ -16,7 +16,12 @@ export function shouldSendEmail(type: NotificationType): boolean {
 }
 
 export function shouldSendPush(type: NotificationType): boolean {
-  return shouldSendEmail(type) || type === 'submission_received' || type === 'dispute_opened';
+  return (
+    shouldSendEmail(type) ||
+    type === 'submission_received' ||
+    type === 'dispute_opened' ||
+    type === 'message_received'
+  );
 }
 
 export function emailSubject(type: NotificationType, title: string): string {
