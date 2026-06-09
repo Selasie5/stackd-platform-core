@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   contests,
@@ -38,7 +38,10 @@ export async function getAdminActionCounts(adminUserId: string) {
         columns: { id: true },
       }),
       db.query.disputes.findMany({
-        where: and(eq(disputes.status, 'open'), isNull(disputes.deletedAt)),
+        where: and(
+          inArray(disputes.status, ['open', 'under_review']),
+          isNull(disputes.deletedAt),
+        ),
         columns: { id: true },
       }),
       db.query.notifications.findMany({

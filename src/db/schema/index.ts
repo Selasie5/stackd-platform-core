@@ -109,6 +109,12 @@ export const disputeStatusEnum = pgEnum('dispute_status', [
 ]);
 export const disputeRaisedByEnum = pgEnum('dispute_raised_by', ['brand', 'creator', 'admin']);
 
+export const disputeOutcomeEnum = pgEnum('dispute_outcome', [
+  'brand_upheld',
+  'creator_upheld',
+  'dismissed',
+]);
+
 export const notificationTypeEnum = pgEnum('notification_type', [
   'kyc_submitted',
   'kyc_approved',
@@ -137,6 +143,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'admin_kyc_pending_review',
   'admin_campaign_pending_review',
   'admin_dispute_opened',
+  'message_received',
 ]);
 
 export const messageReferenceTypeEnum = pgEnum('message_reference_type', [
@@ -754,11 +761,14 @@ export const disputes = pgTable('disputes', {
     .references(() => users.id),
   referenceType: varchar('reference_type', { length: 50 }).notNull(),
   referenceId: uuid('reference_id').notNull(),
+  paymentId: uuid('payment_id').references(() => payments.id),
+  paymentStatusAtOpen: varchar('payment_status_at_open', { length: 50 }),
   subject: varchar('subject', { length: 255 }).notNull(),
   description: text('description').notNull(),
   status: disputeStatusEnum('status').default('open').notNull(),
   assignedTo: uuid('assigned_to').references(() => users.id),
   resolution: text('resolution'),
+  resolutionOutcome: disputeOutcomeEnum('resolution_outcome'),
   resolvedBy: uuid('resolved_by').references(() => users.id),
   resolvedAt: timestamp('resolved_at'),
   deletedAt: timestamp('deleted_at'),
@@ -991,6 +1001,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 export const disputesRelations = relations(disputes, ({ one }) => ({
+  payment: one(payments, { fields: [disputes.paymentId], references: [payments.id] }),
   raisedByUser: one(users, {
     fields: [disputes.raisedByUserId],
     references: [users.id],
