@@ -113,6 +113,9 @@ export const walletTypeDefs = `#graphql
   type CreatorPayment {
     id: ID!
     creatorId: ID!
+    creatorName: String
+    brandName: String
+    opportunityTitle: String
     referenceType: String!
     referenceId: ID!
     opportunityType: String!
@@ -129,6 +132,7 @@ export const walletTypeDefs = `#graphql
     id: ID!
     creatorId: ID!
     creatorName: String
+    creatorEmail: String
     walletId: ID!
     amount: String!
     currency: Currency!

@@ -144,6 +144,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'admin_campaign_pending_review',
   'admin_dispute_opened',
   'message_received',
+  'account_status_changed',
+  'wallet_frozen',
+  'wallet_unfrozen',
+  'campaign_rejected',
 ]);
 
 export const messageReferenceTypeEnum = pgEnum('message_reference_type', [
@@ -503,6 +507,7 @@ export const ugcOrders = pgTable('ugc_orders', {
   revisionLimit: integer('revision_limit').default(1).notNull(),
   deadline: timestamp('deadline').notNull(),
   status: opportunityStatusEnum('status').default('draft').notNull(),
+  adminRejectionNote: text('admin_rejection_note'),
   reservedAt: timestamp('reserved_at'),
   completedAt: timestamp('completed_at'),
   deletedAt: timestamp('deleted_at'),
@@ -534,6 +539,7 @@ export const cpmDeals = pgTable('cpm_deals', {
   postingDeadline: timestamp('posting_deadline').notNull(),
   finalViewCountDeadline: timestamp('final_view_count_deadline').notNull(),
   status: opportunityStatusEnum('status').default('draft').notNull(),
+  adminRejectionNote: text('admin_rejection_note'),
   reservedAt: timestamp('reserved_at'),
   completedAt: timestamp('completed_at'),
   deletedAt: timestamp('deleted_at'),
@@ -572,6 +578,7 @@ export const contests = pgTable('contests', {
   submissionDeadline: timestamp('submission_deadline').notNull(),
   winnerAnnouncementDate: timestamp('winner_announcement_date').notNull(),
   status: opportunityStatusEnum('status').default('draft').notNull(),
+  adminRejectionNote: text('admin_rejection_note'),
   reservedAt: timestamp('reserved_at'),
   completedAt: timestamp('completed_at'),
   deletedAt: timestamp('deleted_at'),

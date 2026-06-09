@@ -20,7 +20,11 @@ export function shouldSendPush(type: NotificationType): boolean {
     shouldSendEmail(type) ||
     type === 'submission_received' ||
     type === 'dispute_opened' ||
-    type === 'message_received'
+    type === 'message_received' ||
+    type === 'account_status_changed' ||
+    type === 'wallet_frozen' ||
+    type === 'wallet_unfrozen' ||
+    type === 'campaign_rejected'
   );
 }
 

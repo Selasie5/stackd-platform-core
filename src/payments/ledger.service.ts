@@ -1,12 +1,15 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
+  brands,
   payments,
   walletTopUps,
   walletTransactions,
   creatorWalletTransactions,
   withdrawals,
 } from '@/db/schema/index';
+import { loadOpportunity } from '@/opportunities/opportunity.loader';
+import type { OpportunityType } from '@/opportunities/types';
 import type { SessionData } from '@/auth/types';
 import { paymentError } from '@/payments/errors';
 import { formatCreatorWallet, getCreatorWallet } from '@/wallets/creator-wallet.service';
@@ -151,12 +154,13 @@ export function formatWithdrawal(row: {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  creator?: { fullName: string } | null;
+  creator?: { fullName: string; user?: { email: string } | null } | null;
 }) {
   return {
     id: row.id,
     creatorId: row.creatorId,
     creatorName: row.creator?.fullName ?? null,
+    creatorEmail: row.creator?.user?.email ?? null,
     walletId: row.walletId,
     amount: row.amount,
     currency: row.currency,
@@ -167,6 +171,52 @@ export function formatWithdrawal(row: {
     completedAt: row.completedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+async function enrichAdminPayment(row: {
+  id: string;
+  creatorId: string;
+  referenceType: string;
+  referenceId: string;
+  opportunityType: string;
+  opportunityId: string;
+  amount: string;
+  currency: string;
+  status: string;
+  processedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  creator?: { fullName: string } | null;
+}) {
+  const base = formatPayment(row);
+
+  const opportunityType: OpportunityType =
+    row.opportunityType === 'ugc_order'
+      ? 'UGC_ORDER'
+      : row.opportunityType === 'cpm_deal'
+        ? 'CPM_DEAL'
+        : 'CONTEST';
+
+  let opportunityTitle: string | null = null;
+  let brandName: string | null = null;
+  try {
+    const opportunity = await loadOpportunity(opportunityType, row.opportunityId);
+    opportunityTitle = opportunity.title;
+    const brand = await db.query.brands.findFirst({
+      where: eq(brands.id, opportunity.brandId),
+      columns: { brandName: true },
+    });
+    brandName = brand?.brandName ?? null;
+  } catch {
+    // skip enrichment for orphaned references
+  }
+
+  return {
+    ...base,
+    creatorName: row.creator?.fullName ?? null,
+    brandName,
+    opportunityTitle,
   };
 }
 
@@ -276,7 +326,12 @@ export async function listAdminWithdrawals(
 ) {
   const rows = await db.query.withdrawals.findMany({
     where: status ? eq(withdrawals.status, status) : undefined,
-    with: { creator: { columns: { fullName: true } } },
+    with: {
+      creator: {
+        columns: { fullName: true },
+        with: { user: { columns: { email: true } } },
+      },
+    },
     orderBy: [desc(withdrawals.createdAt)],
     limit: clampLimit(limit),
   });
@@ -296,11 +351,12 @@ export async function listAdminPayments(
 ) {
   const rows = await db.query.payments.findMany({
     where: status ? eq(payments.status, status) : undefined,
+    with: { creator: { columns: { fullName: true } } },
     orderBy: [desc(payments.createdAt)],
     limit: clampLimit(limit),
   });
 
-  return rows.map(formatPayment);
+  return Promise.all(rows.map(enrichAdminPayment));
 }
 
 export { getMyBrandWallet };

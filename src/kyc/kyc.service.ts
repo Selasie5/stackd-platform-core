@@ -1,7 +1,15 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import { brandWallets, brands, creatorWallets, creators, kycApplications } from '@/db/schema/index';
+import {
+  brandWallets,
+  brands,
+  creatorWallets,
+  creators,
+  kycApplications,
+  users,
+} from '@/db/schema/index';
+import { clampLimit } from '@/admin/list.utils';
 import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { InferSelectModel } from 'drizzle-orm';
 import { kycError } from '@/kyc/errors';
@@ -45,6 +53,47 @@ export function formatKycApplication(row: KycApplicationRow) {
     rejectionReason: row.rejectionReason,
     submittedAt: row.submittedAt.toISOString(),
     reviewedAt: row.reviewedAt?.toISOString() ?? null,
+  };
+}
+
+async function enrichKycApplication(row: KycApplicationRow) {
+  const base = formatKycApplication(row);
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, row.userId),
+    columns: { email: true },
+  });
+
+  let applicantName: string | null = null;
+  if (row.brandId) {
+    const brand = await db.query.brands.findFirst({
+      where: eq(brands.id, row.brandId),
+      columns: { brandName: true },
+    });
+    applicantName = brand?.brandName ?? null;
+  } else if (row.creatorId) {
+    const creator = await db.query.creators.findFirst({
+      where: eq(creators.id, row.creatorId),
+      columns: { fullName: true },
+    });
+    applicantName = creator?.fullName ?? null;
+  }
+
+  let reviewedByEmail: string | null = null;
+  if (row.reviewedBy) {
+    const reviewer = await db.query.users.findFirst({
+      where: eq(users.id, row.reviewedBy),
+      columns: { email: true },
+    });
+    reviewedByEmail = reviewer?.email ?? null;
+  }
+
+  return {
+    ...base,
+    userId: row.userId,
+    applicantEmail: user?.email ?? null,
+    applicantName,
+    reviewedByEmail,
   };
 }
 
@@ -179,13 +228,35 @@ export async function getMyKycApplication(userId: string) {
   return application ? formatKycApplication(application) : null;
 }
 
-export async function listPendingKycApplications() {
+export async function listPendingKycApplications(limit?: number) {
   const rows = await db.query.kycApplications.findMany({
     where: eq(kycApplications.status, 'pending_review'),
     orderBy: desc(kycApplications.submittedAt),
+    limit: clampLimit(limit),
   });
 
-  return rows.map(formatKycApplication);
+  return Promise.all(rows.map(enrichKycApplication));
+}
+
+export async function listAdminKycApplications(
+  status?:
+    | 'not_started'
+    | 'pending_review'
+    | 'approved'
+    | 'rejected'
+    | 'needs_more_info',
+  limit?: number,
+) {
+  const conditions: SQL[] = [];
+  if (status) conditions.push(eq(kycApplications.status, status));
+
+  const rows = await db.query.kycApplications.findMany({
+    where: conditions.length > 0 ? and(...conditions) : undefined,
+    orderBy: desc(kycApplications.submittedAt),
+    limit: clampLimit(limit),
+  });
+
+  return Promise.all(rows.map(enrichKycApplication));
 }
 
 export async function reviewKyc(adminUserId: string, input: unknown) {

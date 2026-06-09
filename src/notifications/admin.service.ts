@@ -6,8 +6,10 @@ import {
   disputes,
   kycApplications,
   notifications,
+  payments,
   ugcOrders,
   users,
+  withdrawals,
 } from '@/db/schema/index';
 
 export async function listActiveAdminUserIds(): Promise<string[]> {
@@ -55,5 +57,41 @@ export async function getAdminActionCounts(adminUserId: string) {
     pendingCampaigns: pendingUgc.length + pendingCpm.length + pendingContests.length,
     openDisputes: openDisputes.length,
     unreadNotifications: unreadNotifications.length,
+  };
+}
+
+export async function getAdminOverview(adminUserId: string) {
+  const counts = await getAdminActionCounts(adminUserId);
+
+  const [
+    needsMoreInfoKyc,
+    disputedPayments,
+    failedWithdrawals,
+    processingWithdrawals,
+  ] = await Promise.all([
+    db.query.kycApplications.findMany({
+      where: eq(kycApplications.status, 'needs_more_info'),
+      columns: { id: true },
+    }),
+    db.query.payments.findMany({
+      where: eq(payments.status, 'disputed'),
+      columns: { id: true },
+    }),
+    db.query.withdrawals.findMany({
+      where: eq(withdrawals.status, 'failed'),
+      columns: { id: true },
+    }),
+    db.query.withdrawals.findMany({
+      where: eq(withdrawals.status, 'processing'),
+      columns: { id: true },
+    }),
+  ]);
+
+  return {
+    ...counts,
+    needsMoreInfoKyc: needsMoreInfoKyc.length,
+    disputedPayments: disputedPayments.length,
+    failedWithdrawals: failedWithdrawals.length,
+    processingWithdrawals: processingWithdrawals.length,
   };
 }

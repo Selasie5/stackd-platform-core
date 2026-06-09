@@ -1,4 +1,5 @@
-﻿import { authResolvers } from '@/graphql/resolvers/auth';
+﻿import { adminResolvers } from '@/graphql/resolvers/admin';
+import { authResolvers } from '@/graphql/resolvers/auth';
 import { disputesResolvers } from '@/graphql/resolvers/disputes';
 import { kycResolvers } from '@/graphql/resolvers/kyc';
 import { messagingResolvers } from '@/graphql/resolvers/messaging';
@@ -11,6 +12,7 @@ export const resolvers = {
   OpportunityResult: opportunitiesResolvers.OpportunityResult,
   Notification: notificationsResolvers.Notification,
   Dispute: disputesResolvers.Dispute,
+  AdminWalletActionResult: adminResolvers.AdminWalletActionResult,
   Query: {
     ...authResolvers.Query,
     ...kycResolvers.Query,
@@ -20,6 +22,7 @@ export const resolvers = {
     ...submissionsResolvers.Query,
     ...disputesResolvers.Query,
     ...messagingResolvers.Query,
+    ...adminResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
@@ -30,5 +33,6 @@ export const resolvers = {
     ...submissionsResolvers.Mutation,
     ...disputesResolvers.Mutation,
     ...messagingResolvers.Mutation,
+    ...adminResolvers.Mutation,
   },
 };

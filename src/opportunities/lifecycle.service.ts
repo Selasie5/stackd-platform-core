@@ -1,7 +1,8 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, ilike, isNull, type SQL } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { brands, contests, cpmDeals, ugcOrders } from '@/db/schema/index';
 import { loadOpportunity } from '@/opportunities/opportunity.loader';
+import { clampLimit } from '@/admin/list.utils';
 import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { SessionData } from '@/auth/types';
 import { opportunityError } from '@/opportunities/errors';
@@ -190,7 +191,39 @@ export async function reviewOpportunity(
   }
 
   assertTransition('reject', record.status);
-  await updateOpportunityStatus(input.type, input.id, 'draft');
+
+  const rejectionNote = input.adminNote ?? null;
+  const rejectValues = {
+    status: 'draft' as OpportunityStatus,
+    adminRejectionNote: rejectionNote,
+    updatedAt: new Date(),
+  };
+
+  if (input.type === 'UGC_ORDER') {
+    await db.update(ugcOrders).set(rejectValues).where(eq(ugcOrders.id, input.id));
+  } else if (input.type === 'CPM_DEAL') {
+    await db.update(cpmDeals).set(rejectValues).where(eq(cpmDeals.id, input.id));
+  } else {
+    await db.update(contests).set(rejectValues).where(eq(contests.id, input.id));
+  }
+
+  const brand = await db.query.brands.findFirst({
+    where: eq(brands.id, record.brandId),
+    columns: { userId: true },
+  });
+  if (brand) {
+    await notify({
+      userId: brand.userId,
+      type: 'campaign_rejected',
+      title: 'Campaign rejected',
+      body: rejectionNote
+        ? `Your campaign "${record.title}" was rejected: ${rejectionNote}`
+        : `Your campaign "${record.title}" was rejected.`,
+      referenceType: OPPORTUNITY_REFERENCE_TYPE[input.type],
+      referenceId: input.id,
+    });
+  }
+
   return formatOpportunity(input.type, input.id);
 }
 
@@ -248,6 +281,105 @@ export async function listPendingOpportunities(type?: OpportunityType) {
   }
 
   return results;
+}
+
+export async function listAdminOpportunities(filters: {
+  type?: OpportunityType;
+  status?: OpportunityStatus;
+  brandId?: string;
+  search?: string;
+  limit?: number;
+}) {
+  const limit = clampLimit(filters.limit);
+  const summaries: Array<{
+    type: OpportunityType;
+    id: string;
+    title: string;
+    brandId: string;
+    brandName: string;
+    status: string;
+    budget: string;
+    currency: string;
+    createdAt: string;
+  }> = [];
+
+  if (!filters.type || filters.type === 'UGC_ORDER') {
+    const ugcConditions: SQL[] = [isNull(ugcOrders.deletedAt)];
+    if (filters.brandId) ugcConditions.push(eq(ugcOrders.brandId, filters.brandId));
+    if (filters.status) ugcConditions.push(eq(ugcOrders.status, filters.status));
+    if (filters.search) ugcConditions.push(ilike(ugcOrders.title, `%${filters.search}%`));
+
+    const rows = await db.query.ugcOrders.findMany({
+      where: and(...ugcConditions),
+      with: { brand: { columns: { brandName: true } } },
+    });
+    for (const row of rows) {
+      summaries.push({
+        type: 'UGC_ORDER',
+        id: row.id,
+        title: row.title,
+        brandId: row.brandId,
+        brandName: row.brand.brandName,
+        status: row.status,
+        budget: row.totalBudget,
+        currency: row.currency,
+        createdAt: row.createdAt.toISOString(),
+      });
+    }
+  }
+
+  if (!filters.type || filters.type === 'CPM_DEAL') {
+    const cpmConditions: SQL[] = [isNull(cpmDeals.deletedAt)];
+    if (filters.brandId) cpmConditions.push(eq(cpmDeals.brandId, filters.brandId));
+    if (filters.status) cpmConditions.push(eq(cpmDeals.status, filters.status));
+    if (filters.search) cpmConditions.push(ilike(cpmDeals.title, `%${filters.search}%`));
+
+    const rows = await db.query.cpmDeals.findMany({
+      where: and(...cpmConditions),
+      with: { brand: { columns: { brandName: true } } },
+    });
+    for (const row of rows) {
+      summaries.push({
+        type: 'CPM_DEAL',
+        id: row.id,
+        title: row.title,
+        brandId: row.brandId,
+        brandName: row.brand.brandName,
+        status: row.status,
+        budget: row.maxCampaignBudget,
+        currency: row.currency,
+        createdAt: row.createdAt.toISOString(),
+      });
+    }
+  }
+
+  if (!filters.type || filters.type === 'CONTEST') {
+    const contestConditions: SQL[] = [isNull(contests.deletedAt)];
+    if (filters.brandId) contestConditions.push(eq(contests.brandId, filters.brandId));
+    if (filters.status) contestConditions.push(eq(contests.status, filters.status));
+    if (filters.search) contestConditions.push(ilike(contests.title, `%${filters.search}%`));
+
+    const rows = await db.query.contests.findMany({
+      where: and(...contestConditions),
+      with: { brand: { columns: { brandName: true } } },
+    });
+    for (const row of rows) {
+      summaries.push({
+        type: 'CONTEST',
+        id: row.id,
+        title: row.title,
+        brandId: row.brandId,
+        brandName: row.brand.brandName,
+        status: row.status,
+        budget: row.totalContestBudget,
+        currency: row.currency,
+        createdAt: row.createdAt.toISOString(),
+      });
+    }
+  }
+
+  summaries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return summaries.slice(0, limit);
 }
 
 export { loadOpportunity } from '@/opportunities/opportunity.loader';

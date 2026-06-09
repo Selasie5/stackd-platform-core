@@ -1,4 +1,5 @@
-﻿import { authTypeDefs } from '@/graphql/typeDefs/auth';
+﻿import { adminTypeDefs } from '@/graphql/typeDefs/admin';
+import { authTypeDefs } from '@/graphql/typeDefs/auth';
 import { disputesTypeDefs } from '@/graphql/typeDefs/disputes';
 import { kycTypeDefs } from '@/graphql/typeDefs/kyc';
 import { messagingTypeDefs } from '@/graphql/typeDefs/messaging';
@@ -27,4 +28,5 @@ export const allTypeDefs = [
   submissionsTypeDefs,
   disputesTypeDefs,
   messagingTypeDefs,
+  adminTypeDefs,
 ];

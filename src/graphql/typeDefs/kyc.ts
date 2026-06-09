@@ -18,6 +18,10 @@ export const kycTypeDefs = `#graphql
     rejectionReason: String
     submittedAt: String!
     reviewedAt: String
+    userId: ID
+    applicantEmail: String
+    applicantName: String
+    reviewedByEmail: String
   }
 
   input KycDocumentInput {

@@ -28,6 +28,10 @@ export const notificationsTypeDefs = `#graphql
     admin_campaign_pending_review
     admin_dispute_opened
     message_received
+    account_status_changed
+    wallet_frozen
+    wallet_unfrozen
+    campaign_rejected
   }
 
   type Notification {
