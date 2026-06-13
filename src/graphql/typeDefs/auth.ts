@@ -50,6 +50,11 @@ export const authTypeDefs = `#graphql
     country: String!
     contactName: String!
     currency: String
+    industry: String!
+    city: String!
+    description: String!
+    website: String
+    logoUrl: String
   }
 
   input RegisterCreatorInput {

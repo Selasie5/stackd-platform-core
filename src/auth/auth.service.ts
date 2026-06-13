@@ -19,6 +19,11 @@ const registerBrandSchema = z.object({
   country: z.string().min(1).max(100),
   contactName: z.string().min(1).max(255),
   currency: z.enum(['NGN', 'GHS', 'USD']).optional(),
+  industry: z.string().min(1).max(100),
+  city: z.string().min(1).max(100),
+  description: z.string().min(1),
+  website: z.string().max(512).optional(),
+  logoUrl: z.string().max(1024).optional(),
 });
 
 const registerCreatorSchema = z.object({
@@ -137,6 +142,11 @@ export async function registerBrand(input: unknown) {
       brandName: data.brandName,
       country: data.country,
       contactName: data.contactName,
+      industry: data.industry,
+      city: data.city,
+      description: data.description,
+      website: data.website,
+      logoUrl: data.logoUrl,
     })
     .returning();
 
