@@ -121,14 +121,89 @@ async function getProfileKycStatus(session: SessionData): Promise<{
   throw kycError('KYC_NOT_FOUND', 'No KYC profile found for this account');
 }
 
+function resolveEffectiveKycStatus(
+  profileStatus: string | null | undefined,
+  applicationStatus: string | null | undefined,
+): string {
+  const profile = profileStatus ?? 'not_started';
+
+  if (profile === 'approved' || applicationStatus === 'approved') {
+    return 'approved';
+  }
+
+  if (applicationStatus && applicationStatus !== 'not_started') {
+    return applicationStatus;
+  }
+
+  return profile;
+}
+
+async function syncApprovedProfileKycStatus(
+  role: 'brand' | 'creator',
+  profileId: string,
+  profileStatus: string,
+  applicationStatus: string | undefined,
+): Promise<void> {
+  if (applicationStatus !== 'approved' || profileStatus === 'approved') {
+    return;
+  }
+
+  const now = new Date();
+
+  if (role === 'brand') {
+    await db
+      .update(brands)
+      .set({ kycStatus: 'approved', kycApprovedAt: now })
+      .where(eq(brands.id, profileId));
+    await db
+      .update(brandWallets)
+      .set({ status: 'active' })
+      .where(eq(brandWallets.brandId, profileId));
+    return;
+  }
+
+  await db
+    .update(creators)
+    .set({ kycStatus: 'approved', kycApprovedAt: now })
+    .where(eq(creators.id, profileId));
+  await db
+    .update(creatorWallets)
+    .set({ status: 'active' })
+    .where(eq(creatorWallets.creatorId, profileId));
+}
+
 export async function getKycStatusForUser(userId: string, role: UserRole): Promise<string> {
+  const currentApplication = await db.query.kycApplications.findFirst({
+    where: and(eq(kycApplications.userId, userId), eq(kycApplications.isCurrent, true)),
+    orderBy: desc(kycApplications.createdAt),
+    columns: { status: true },
+  });
+
   if (role === 'brand') {
     const brand = await db.query.brands.findFirst({ where: eq(brands.userId, userId) });
-    return brand?.kycStatus ?? 'not_started';
+    if (!brand) return 'not_started';
+
+    await syncApprovedProfileKycStatus(
+      'brand',
+      brand.id,
+      brand.kycStatus,
+      currentApplication?.status,
+    );
+
+    return resolveEffectiveKycStatus(brand.kycStatus, currentApplication?.status);
   }
   if (role === 'creator') {
     const creator = await db.query.creators.findFirst({ where: eq(creators.userId, userId) });
-    return creator?.kycStatus ?? 'not_started';
+    if (!creator) return 'not_started';
+
+    await syncApprovedProfileKycStatus(
+      'creator',
+      creator.id,
+      creator.kycStatus,
+      currentApplication?.status,
+    );
+
+    return resolveEffectiveKycStatus(creator.kycStatus, currentApplication?.status);
   }
   return 'approved';
 }

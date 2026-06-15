@@ -1,5 +1,6 @@
 import http from 'http';
 import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
@@ -13,12 +14,18 @@ import { paystackWebhookHandler } from '@/routes/paystack-webhook';
 import { redisClient } from '@/queues/client';
 import { db } from '@/db/client';
 import { sql } from 'drizzle-orm';
+import { generateSignature } from '@/utils/cloudinary';
+import { config } from '@/config';
 
 export type { GraphQLContext } from '@/graphql/context';
 
 export const app = express();
 
 export async function startServer(): Promise<http.Server> {
+  app.use(cors({
+    origin: config.FRONTEND_URL,
+    credentials: true,
+  }));
   app.use(cookieParser());
 
   app.post('/webhooks/paystack', express.raw({ type: 'application/json' }), paystackWebhookHandler);
@@ -35,6 +42,15 @@ export async function startServer(): Promise<http.Server> {
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/api/upload-signature', (_req, res) => {
+    try {
+      const signatureData = generateSignature('spleenet/brands/logos');
+      res.json(signatureData);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to generate signature' });
+    }
   });
 
   app.get('/health/ready', async (_req, res) => {

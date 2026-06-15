@@ -165,6 +165,57 @@ describe('kyc flow', () => {
     expect(approveResult.data?.reviewKyc.status).toBe('approved');
   });
 
+  it('myBrandWallet succeeds when application is approved but brand kycStatus is stale', async () => {
+    const brand = await createVerifiedBrand();
+
+    const submitResult = await executeGql<{ submitKyc: { status: string } }>(
+      `mutation($input: SubmitKycInput!) {
+        submitKyc(input: $input) { status }
+      }`,
+      {
+        sessionToken: brand.sessionToken,
+        variables: {
+          input: {
+            documents: [
+              {
+                documentType: 'business_registration',
+                fileUrl: 'https://example.com/stale-status-doc.pdf',
+              },
+            ],
+          },
+        },
+      },
+    );
+    expect(submitResult.data?.submitKyc.status).toBe('pending_review');
+
+    const applicationId = await getMyKycApplicationId(brand.sessionToken);
+
+    const approveResult = await executeGql<{ reviewKyc: { status: string } }>(
+      `mutation($input: ReviewKycInput!) {
+        reviewKyc(input: $input) { status }
+      }`,
+      {
+        sessionToken: adminSession.sessionToken,
+        variables: { input: { applicationId, decision: 'approved' } },
+      },
+    );
+    expect(approveResult.data?.reviewKyc.status).toBe('approved');
+
+    await db
+      .update(brands)
+      .set({ kycStatus: 'pending_review' })
+      .where(eq(brands.id, brand.user.brand!.id));
+
+    const walletResult = await executeGql<{
+      myBrandWallet: { status: string; availableBalance: string };
+    }>(`query { myBrandWallet { status availableBalance } }`, {
+      sessionToken: brand.sessionToken,
+    });
+
+    expect(walletResult.errors).toBeUndefined();
+    expect(walletResult.data?.myBrandWallet.status).toBe('active');
+  });
+
   it('non-admin cannot review kyc', async () => {
     const brand = await createVerifiedBrand();
     const forbidden = await executeGql(
