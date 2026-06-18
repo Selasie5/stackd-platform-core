@@ -1,6 +1,6 @@
 import type { GraphQLContext } from '@/graphql/context';
 import { requireAdmin, requireBrandWriteAccess, requireCreatorApplyAccess } from '@/kyc/guards';
-import { getMyBrandWallet, initializeWalletTopUp } from '@/payments/wallet-funding.service';
+import { getMyBrandWallet, initializeWalletTopUp, verifyWalletTopUp } from '@/payments/wallet-funding.service';
 import {
   getMyCreatorWallet,
   listAdminPayments,
@@ -122,6 +122,14 @@ export const walletResolvers = {
     ) => {
       const session = await requireBrandWriteAccess(ctx);
       return initializeWalletTopUp(session, amount);
+    },
+    verifyWalletTopUp: async (
+      _: unknown,
+      { reference }: { reference: string },
+      ctx: GraphQLContext,
+    ) => {
+      const session = await requireBrandWriteAccess(ctx);
+      return verifyWalletTopUp(session, reference);
     },
     updatePaymentDetails: async (
       _: unknown,

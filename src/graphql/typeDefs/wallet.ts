@@ -189,6 +189,7 @@ export const walletTypeDefs = `#graphql
 
   extend type Mutation {
     initializeWalletTopUp(amount: String!): WalletTopUpInit!
+    verifyWalletTopUp(reference: String!): BrandWallet!
     updatePaymentDetails(input: UpdatePaymentDetailsInput!): PaymentDetails!
     requestWithdrawal(amount: String!): Withdrawal!
   }

@@ -67,6 +67,22 @@ export async function initializeTransaction(input: {
   });
 }
 
+export interface VerifyTransactionResult {
+  status: string;
+  reference: string;
+  amount: number;
+  metadata?: {
+    type?: string;
+    topUpId?: string;
+    brandId?: string;
+    userId?: string;
+  };
+}
+
+export async function verifyTransaction(reference: string): Promise<VerifyTransactionResult> {
+  return paystackFetch<VerifyTransactionResult>(`/transaction/verify/${encodeURIComponent(reference)}`);
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string | undefined): boolean {
   const webhookSecret = config.PAYSTACK_WEBHOOK_SECRET ?? process.env.PAYSTACK_WEBHOOK_SECRET;
   if (!webhookSecret || !signature) {

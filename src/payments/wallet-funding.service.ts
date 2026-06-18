@@ -7,7 +7,7 @@ import { brandWallets, brands, users, walletTopUps } from '@/db/schema/index';
 import type { SessionData } from '@/auth/types';
 import { notify } from '@/notifications/notification.service';
 import { paymentError } from '@/payments/errors';
-import { initializeTransaction, toPaystackAmount } from '@/payments/paystack.client';
+import { initializeTransaction, toPaystackAmount, verifyTransaction } from '@/payments/paystack.client';
 import { creditFunds, getWallet } from '@/opportunities/wallet.service';
 
 const initializeTopUpSchema = z.object({
@@ -101,7 +101,7 @@ export async function initializeWalletTopUp(session: SessionData, amountInput: s
       brandId: session.brandId,
       userId: session.userId,
     },
-    callbackUrl: `${config.FRONTEND_URL}/wallet?topup=success`,
+    callbackUrl: `${config.FRONTEND_URL}/dashboard/wallet?topup=success`,
   });
 
   return {
@@ -111,6 +111,40 @@ export async function initializeWalletTopUp(session: SessionData, amountInput: s
     amount,
     currency: wallet.currency,
   };
+}
+
+export async function verifyWalletTopUp(session: SessionData, reference: string) {
+  if (!session.brandId) {
+    throw paymentError('WALLET_NOT_FOUND', 'Brand wallet not found');
+  }
+
+  const topUp = await db.query.walletTopUps.findFirst({
+    where: eq(walletTopUps.paystackReference, reference),
+  });
+
+  if (!topUp || topUp.brandId !== session.brandId) {
+    throw paymentError('TOP_UP_NOT_FOUND', 'Wallet top-up not found');
+  }
+
+  if (topUp.status === 'completed') {
+    return getMyBrandWallet(session);
+  }
+
+  const verified = await verifyTransaction(reference);
+
+  if (verified.status !== 'success') {
+    throw paymentError('TOP_UP_NOT_FOUND', 'Payment was not completed');
+  }
+
+  await completeWalletTopUpFromWebhook({
+    topUpId: topUp.id,
+    brandId: session.brandId,
+    userId: session.userId,
+    paystackReference: verified.reference,
+    amountPaid: verified.amount,
+  });
+
+  return getMyBrandWallet(session);
 }
 
 export async function completeWalletTopUpFromWebhook(input: {
