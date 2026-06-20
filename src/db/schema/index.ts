@@ -1046,3 +1046,21 @@ export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }));
+
+// ─── Notification Preferences ─────────────────────────────────────────────
+
+export const notificationPreferences = pgTable('notification_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  emailMarketing: boolean('email_marketing').default(true).notNull(),
+  emailSecurity: boolean('email_security').default(true).notNull(),
+  emailCampaignUpdates: boolean('email_campaign_updates').default(true).notNull(),
+  pushMarketing: boolean('push_marketing').default(true).notNull(),
+  pushSecurity: boolean('push_security').default(true).notNull(),
+  pushCampaignUpdates: boolean('push_campaign_updates').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
