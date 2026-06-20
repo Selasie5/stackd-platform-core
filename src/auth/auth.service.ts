@@ -62,7 +62,15 @@ export function formatUser(user: UserWithProfiles) {
       ? {
           id: user.brand.id,
           brandName: user.brand.brandName,
+          contactName: user.brand.contactName,
+          city: user.brand.city,
+          country: user.brand.country,
+          industry: user.brand.industry,
+          description: user.brand.description,
+          website: user.brand.website,
+          logoUrl: user.brand.logoUrl,
           kycStatus: user.brand.kycStatus,
+          createdAt: user.brand.createdAt.toISOString(),
         }
       : null,
     creator: user.creator

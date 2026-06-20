@@ -20,6 +20,7 @@ import { config } from '@/config';
 export type { GraphQLContext } from '@/graphql/context';
 
 export const app = express();
+app.set('trust proxy', 1);
 
 export async function startServer(): Promise<http.Server> {
   app.use(cors({
