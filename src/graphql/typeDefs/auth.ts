@@ -31,6 +31,13 @@ export const authTypeDefs = `#graphql
   type Creator {
     id: ID!
     fullName: String!
+    school: String
+    country: String
+    city: String
+    phone: String
+    bio: String
+    mainNiche: String
+    isProfileComplete: Boolean!
     kycStatus: String!
   }
 

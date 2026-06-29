@@ -8,6 +8,7 @@ import {
   getActiveSessions,
   revokeSessionById,
 } from '@/auth/settings.service';
+import { getCreatorProfile, updateCreatorProfile } from '@/auth/creator.service';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -18,6 +19,10 @@ export const settingsResolvers = {
     brand: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
       const session = requireAuth(ctx);
       return getBrand(session.userId);
+    },
+    creator: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      const session = requireAuth(ctx);
+      return getCreatorProfile(session.userId);
     },
     activeSessions: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
       const session = requireAuth(ctx);
@@ -37,6 +42,14 @@ export const settingsResolvers = {
     ) => {
       const session = requireAuth(ctx);
       return updateBrand(session.userId, input as Parameters<typeof updateBrand>[1]);
+    },
+    updateCreatorProfile: async (
+      _: unknown,
+      { input }: { input: unknown },
+      ctx: GraphQLContext,
+    ) => {
+      const session = requireAuth(ctx);
+      return updateCreatorProfile(session.userId, input);
     },
     changePassword: async (
       _: unknown,

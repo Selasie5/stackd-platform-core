@@ -49,14 +49,43 @@ export const settingsTypeDefs = `#graphql
     pushCampaignUpdates: Boolean
   }
 
+  input CreatorSampleInput {
+    title: String!
+    category: String!
+    videoUrl: String
+    externalLink: String
+    note: String
+  }
+
+  input UpdateCreatorProfileInput {
+    fullName: String
+    school: String
+    country: String
+    city: String
+    phone: String
+    bio: String
+    mainNiche: String
+    otherNiches: [String!]
+    tiktokHandle: String
+    instagramHandle: String
+    youtubeHandle: String
+    languagesSpoken: [String!]
+    equipment: [String!]
+    availability: String
+    samples: [CreatorSampleInput!]
+    completeProfile: Boolean
+  }
+
   extend type Query {
     brand: Brand
+    creator: Creator
     activeSessions: [ActiveSession!]!
     notificationPreferences: NotificationPreferences!
   }
 
   extend type Mutation {
     updateBrand(input: UpdateBrandInput!): Brand!
+    updateCreatorProfile(input: UpdateCreatorProfileInput!): Creator!
     changePassword(currentPassword: String!, newPassword: String!): Boolean!
     revokeSession(sessionId: String!): Boolean!
     updateNotificationPreferences(input: NotificationPreferencesInput!): NotificationPreferences!

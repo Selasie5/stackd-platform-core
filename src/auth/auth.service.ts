@@ -77,6 +77,13 @@ export function formatUser(user: UserWithProfiles) {
       ? {
           id: user.creator.id,
           fullName: user.creator.fullName,
+          school: user.creator.school,
+          country: user.creator.country,
+          city: user.creator.city,
+          phone: user.creator.phone,
+          bio: user.creator.bio,
+          mainNiche: user.creator.mainNiche,
+          isProfileComplete: user.creator.isProfileComplete,
           kycStatus: user.creator.kycStatus,
         }
       : null,
