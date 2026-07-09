@@ -1,6 +1,20 @@
 ﻿import 'dotenv/config';
 import { z } from 'zod';
 
+const corsOriginsSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    return value
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+  },
+  z.array(z.string().url()).default(['http://localhost:3000', 'http://localhost:3001']),
+);
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
@@ -15,6 +29,7 @@ const envSchema = z.object({
   COOKIE_SECURE: z.coerce.boolean().default(false),
   COOKIE_DOMAIN: z.string().optional(),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  CORS_ORIGINS: corsOriginsSchema,
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().email().default('noreply@spleenet.com'),
   EMAIL_VERIFY_TTL_SECONDS: z.coerce.number().default(86400),

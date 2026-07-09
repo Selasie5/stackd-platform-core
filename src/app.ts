@@ -24,7 +24,7 @@ app.set('trust proxy', 1);
 
 export async function startServer(): Promise<http.Server> {
   app.use(cors({
-    origin: config.FRONTEND_URL,
+    origin: config.CORS_ORIGINS,
     credentials: true,
   }));
   app.use(cookieParser());
@@ -49,7 +49,7 @@ export async function startServer(): Promise<http.Server> {
     try {
       const signatureData = generateSignature('spleenet/brands/logos');
       res.json(signatureData);
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: 'Failed to generate signature' });
     }
   });

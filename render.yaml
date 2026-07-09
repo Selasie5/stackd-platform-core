@@ -28,6 +28,8 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: CORS_ORIGINS
+        sync: false
       - key: SESSION_COOKIE_NAME
         value: spleenet_session
       - key: SESSION_TTL_SECONDS

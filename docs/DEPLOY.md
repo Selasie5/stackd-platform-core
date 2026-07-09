@@ -66,6 +66,7 @@ Long-term: adopt versioned SQL migrations (`db:generate` + `db:migrate`).
 |----------|----------|-------|
 | `DATABASE_URL` | Yes | Neon connection string |
 | `FRONTEND_URL` | Yes | e.g. `https://app.spleenet.com` |
+| `CORS_ORIGINS` | Yes | Comma-separated origins, e.g. `https://creator.spleenet.com,https://brand.spleenet.com` |
 | `RESEND_API_KEY` | Recommended | Email delivery |
 | `PAYSTACK_SECRET_KEY` | Production | Live key |
 | `PAYSTACK_WEBHOOK_SECRET` | Production | From Paystack dashboard |
@@ -105,6 +106,7 @@ Render `render.yaml` uses `healthCheckPath: /health/ready`.
 NODE_ENV=production
 COOKIE_SECURE=true
 FRONTEND_URL=https://your-frontend-domain
+CORS_ORIGINS=https://creator.spleenet.com,https://brand.spleenet.com
 DATABASE_URL=postgresql://...neon...
 REDIS_URL=redis://...
 PAYSTACK_SECRET_KEY=sk_live_...
