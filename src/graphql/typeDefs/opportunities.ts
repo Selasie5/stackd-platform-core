@@ -152,6 +152,7 @@ export const opportunitiesTypeDefs = `#graphql
   type Contest implements Opportunity {
     id: ID!
     brandId: ID!
+    brandName: String
     title: String!
     productName: String!
     shortDescription: String!

@@ -50,6 +50,22 @@ services:
         sync: false
       - key: PAYSTACK_WEBHOOK_SECRET
         sync: false
+      - key: PAYMENT_PROVIDER
+        sync: false
+      - key: MOOLRE_BASE_URL
+        sync: false
+      - key: MOOLRE_API_USER
+        sync: false
+      - key: MOOLRE_API_KEY
+        sync: false
+      - key: MOOLRE_API_PUBKEY
+        sync: false
+      - key: MOOLRE_WEBHOOK_SECRET
+        sync: false
+      - key: MOOLRE_WEBHOOK_URL
+        sync: false
+      - key: MOOLRE_ACCOUNT_NUMBER
+        sync: false
       - key: FCM_PROJECT_ID
         sync: false
       - key: FCM_CLIENT_EMAIL

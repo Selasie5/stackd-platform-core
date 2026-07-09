@@ -2,6 +2,8 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   brands,
+  creatorWallets,
+  creators,
   payments,
   walletTopUps,
   walletTransactions,
@@ -11,8 +13,10 @@ import {
 import { loadOpportunity } from '@/opportunities/opportunity.loader';
 import type { OpportunityType } from '@/opportunities/types';
 import type { SessionData } from '@/auth/types';
+import { currencyForCountry } from '@/lib/currency';
 import { paymentError } from '@/payments/errors';
 import { formatCreatorWallet, getCreatorWallet } from '@/wallets/creator-wallet.service';
+import { parseAmount } from '@/opportunities/wallet.service';
 import { getMyBrandWallet } from '@/payments/wallet-funding.service';
 
 const DEFAULT_LIMIT = 50;
@@ -259,6 +263,31 @@ export async function getMyCreatorWallet(session: SessionData) {
   }
 
   const wallet = await getCreatorWallet(session.creatorId);
+  const creator = await db.query.creators.findFirst({
+    where: eq(creators.id, session.creatorId),
+    columns: { country: true },
+  });
+
+  if (creator?.country) {
+    const expectedCurrency = currencyForCountry(creator.country);
+    const hasNoActivity =
+      parseAmount(wallet.availableBalance) === 0 &&
+      parseAmount(wallet.totalEarned) === 0 &&
+      parseAmount(wallet.totalWithdrawn) === 0;
+
+    if (wallet.currency !== expectedCurrency && hasNoActivity) {
+      const [updated] = await db
+        .update(creatorWallets)
+        .set({ currency: expectedCurrency, updatedAt: new Date() })
+        .where(eq(creatorWallets.id, wallet.id))
+        .returning();
+
+      if (updated) {
+        return formatCreatorWallet(updated);
+      }
+    }
+  }
+
   return formatCreatorWallet(wallet);
 }
 

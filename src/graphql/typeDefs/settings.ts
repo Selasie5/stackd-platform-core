@@ -49,12 +49,33 @@ export const settingsTypeDefs = `#graphql
     pushCampaignUpdates: Boolean
   }
 
+  type CreatorSample {
+    id: ID!
+    title: String!
+    category: String!
+    videoUrl: String
+    externalLink: String
+    note: String
+  }
+
   input CreatorSampleInput {
     title: String!
     category: String!
     videoUrl: String
     externalLink: String
     note: String
+  }
+
+  extend type Creator {
+    otherNiches: [String!]!
+    tiktokHandle: String
+    instagramHandle: String
+    youtubeHandle: String
+    languagesSpoken: [String!]!
+    equipment: [String!]!
+    availability: String
+    samples: [CreatorSample!]!
+    createdAt: String!
   }
 
   input UpdateCreatorProfileInput {
@@ -64,6 +85,7 @@ export const settingsTypeDefs = `#graphql
     city: String
     phone: String
     bio: String
+    profileImage: String
     mainNiche: String
     otherNiches: [String!]
     tiktokHandle: String

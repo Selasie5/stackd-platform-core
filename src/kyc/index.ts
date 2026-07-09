@@ -18,5 +18,6 @@ export {
   requireKycApproved,
   requireBrandWriteAccess,
   requireCreatorApplyAccess,
+  requireCreatorBrowseAccess,
   requireAdmin,
 } from '@/kyc/guards';

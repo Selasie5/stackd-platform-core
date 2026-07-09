@@ -29,6 +29,14 @@ const envSchema = z.object({
   ADMIN_NOTIFICATION_EMAIL: z.coerce.boolean().default(true),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+  PAYMENT_PROVIDER: z.enum(['paystack', 'moolre']).default('paystack'),
+  MOOLRE_BASE_URL: z.string().default('https://api.moolre.com'),
+  MOOLRE_API_USER: z.string().optional(),
+  MOOLRE_API_KEY: z.string().optional(),
+  MOOLRE_API_PUBKEY: z.string().optional(),
+  MOOLRE_WEBHOOK_SECRET: z.string().optional(),
+  MOOLRE_WEBHOOK_URL: z.string().optional(),
+  MOOLRE_ACCOUNT_NUMBER: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

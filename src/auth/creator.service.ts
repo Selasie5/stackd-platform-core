@@ -1,8 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db/client';
-import { creatorSamples, creators } from '@/db/schema/index';
+import { creatorSamples, creatorWallets, creators } from '@/db/schema/index';
 import { authError } from '@/auth/errors';
+import { currencyForCountry } from '@/lib/currency';
+import { parseAmount } from '@/opportunities/wallet.service';
 
 const sampleCategories = [
   'ugc',
@@ -36,6 +38,7 @@ const updateCreatorProfileSchema = z.object({
   city: z.string().max(100).optional(),
   phone: z.string().max(50).optional(),
   bio: z.string().max(2000).optional(),
+  profileImage: z.union([z.string().url().max(1024), z.null()]).optional(),
   mainNiche: z.string().max(100).optional(),
   otherNiches: z.array(z.string().max(100)).optional(),
   tiktokHandle: z.string().max(100).optional(),
@@ -59,6 +62,7 @@ export function formatCreator(creator: typeof creators.$inferSelect) {
     city: creator.city,
     phone: creator.phone,
     bio: creator.bio,
+    profileImage: creator.profileImage,
     mainNiche: creator.mainNiche,
     otherNiches: creator.otherNiches ?? [],
     tiktokHandle: creator.tiktokHandle,
@@ -73,13 +77,30 @@ export function formatCreator(creator: typeof creators.$inferSelect) {
   };
 }
 
+function formatCreatorSample(sample: typeof creatorSamples.$inferSelect) {
+  return {
+    id: sample.id,
+    title: sample.title,
+    category: sample.category,
+    videoUrl: sample.videoUrl,
+    externalLink: sample.externalLink,
+    note: sample.note,
+  };
+}
+
 export async function getCreatorProfile(userId: string) {
   const creator = await db.query.creators.findFirst({
     where: eq(creators.userId, userId),
+    with: { samples: true },
   });
 
   if (!creator) return null;
-  return formatCreator(creator);
+
+  const { samples, ...rest } = creator;
+  return {
+    ...formatCreator(rest),
+    samples: samples.map(formatCreatorSample),
+  };
 }
 
 export async function updateCreatorProfile(userId: string, input: unknown) {
@@ -121,15 +142,29 @@ export async function updateCreatorProfile(userId: string, input: unknown) {
         );
       }
     }
+
+    const country = profileFields.country ?? creator.country;
+    if (country) {
+      const wallet = await tx.query.creatorWallets.findFirst({
+        where: eq(creatorWallets.creatorId, creator.id),
+      });
+
+      if (wallet) {
+        const expectedCurrency = currencyForCountry(country);
+        const hasNoActivity =
+          parseAmount(wallet.availableBalance) === 0 &&
+          parseAmount(wallet.totalEarned) === 0 &&
+          parseAmount(wallet.totalWithdrawn) === 0;
+
+        if (wallet.currency !== expectedCurrency && hasNoActivity) {
+          await tx
+            .update(creatorWallets)
+            .set({ currency: expectedCurrency, updatedAt: new Date() })
+            .where(eq(creatorWallets.id, wallet.id));
+        }
+      }
+    }
   });
 
-  const updated = await db.query.creators.findFirst({
-    where: eq(creators.id, creator.id),
-  });
-
-  if (!updated) {
-    throw authError('USER_NOT_FOUND', 'Creator profile not found');
-  }
-
-  return formatCreator(updated);
+  return getCreatorProfile(userId);
 }

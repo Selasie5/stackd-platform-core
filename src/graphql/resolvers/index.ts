@@ -11,6 +11,7 @@ import { walletResolvers } from '@/graphql/resolvers/wallet';
 
 export const resolvers = {
   OpportunityResult: opportunitiesResolvers.OpportunityResult,
+  Contest: opportunitiesResolvers.Contest,
   Notification: notificationsResolvers.Notification,
   Dispute: disputesResolvers.Dispute,
   AdminWalletActionResult: adminResolvers.AdminWalletActionResult,

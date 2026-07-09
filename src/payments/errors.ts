@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
 
 export type PaymentErrorCode =
+  | 'MOOLRE_NOT_CONFIGURED'
   | 'PAYSTACK_NOT_CONFIGURED'
   | 'INVALID_AMOUNT'
   | 'WALLET_FROZEN'

@@ -243,6 +243,7 @@ export const creators = pgTable('creators', {
   city: varchar('city', { length: 100 }),
   phone: varchar('phone', { length: 50 }),
   bio: text('bio'),
+  profileImage: varchar('profile_image', { length: 1024 }),
   mainNiche: varchar('main_niche', { length: 100 }),
   otherNiches: jsonb('other_niches').$type<string[]>().default([]),
   tiktokHandle: varchar('tiktok_handle', { length: 100 }),

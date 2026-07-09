@@ -1,9 +1,12 @@
 import type { GraphQLContext } from '@/graphql/context';
 import { requireAuth } from '@/auth/guards';
-import { requireBrandWriteAccess, requireCreatorApplyAccess } from '@/kyc/guards';
+import { requireBrandWriteAccess, requireCreatorApplyAccess, requireCreatorBrowseAccess } from '@/kyc/guards';
 import {
   approveCpmSubmission,
   approveUgcSubmission,
+  getContestForCreatorBrowse,
+  getContestPublicLeaderboard,
+  getContestSubmissionCount,
   listCpmSubmissionsForDeal,
   listContestSubmissionsForContest,
   listLiveContests,
@@ -23,20 +26,98 @@ import {
   submitUgcSubmission,
   verifyCpmViews,
 } from '@/submissions/index';
+import {
+  getContestSubmissionMeta,
+  getCpmSubmissionMeta,
+  getSubmissionPayment,
+  getUgcSubmissionMeta,
+} from '@/submissions/submission-metadata.service';
+
+const submissionMetaResolvers = {
+  opportunityTitle: async (
+    parent: { ugcOrderId?: string; cpmDealId?: string; contestId?: string },
+  ) => {
+    if (parent.ugcOrderId) return (await getUgcSubmissionMeta(parent.ugcOrderId))?.opportunityTitle ?? null;
+    if (parent.cpmDealId) return (await getCpmSubmissionMeta(parent.cpmDealId))?.opportunityTitle ?? null;
+    if (parent.contestId) return (await getContestSubmissionMeta(parent.contestId))?.opportunityTitle ?? null;
+    return null;
+  },
+  brandName: async (
+    parent: { ugcOrderId?: string; cpmDealId?: string; contestId?: string },
+  ) => {
+    if (parent.ugcOrderId) return (await getUgcSubmissionMeta(parent.ugcOrderId))?.brandName ?? null;
+    if (parent.cpmDealId) return (await getCpmSubmissionMeta(parent.cpmDealId))?.brandName ?? null;
+    if (parent.contestId) return (await getContestSubmissionMeta(parent.contestId))?.brandName ?? null;
+    return null;
+  },
+  potentialPayout: async (
+    parent: {
+      ugcOrderId?: string;
+      cpmDealId?: string;
+      contestId?: string;
+      calculatedPayout?: string | null;
+      rewardAmount?: string | null;
+    },
+  ) => {
+    if (parent.rewardAmount) return parent.rewardAmount;
+    if (parent.calculatedPayout) return parent.calculatedPayout;
+    if (parent.ugcOrderId) return (await getUgcSubmissionMeta(parent.ugcOrderId))?.potentialPayout ?? null;
+    if (parent.cpmDealId) return (await getCpmSubmissionMeta(parent.cpmDealId))?.potentialPayout ?? null;
+    if (parent.contestId) return (await getContestSubmissionMeta(parent.contestId))?.potentialPayout ?? null;
+    return null;
+  },
+  currency: async (
+    parent: { ugcOrderId?: string; cpmDealId?: string; contestId?: string },
+  ) => {
+    if (parent.ugcOrderId) return (await getUgcSubmissionMeta(parent.ugcOrderId))?.currency ?? null;
+    if (parent.cpmDealId) return (await getCpmSubmissionMeta(parent.cpmDealId))?.currency ?? null;
+    if (parent.contestId) return (await getContestSubmissionMeta(parent.contestId))?.currency ?? null;
+    return null;
+  },
+  paymentAmount: async (parent: { id: string }) =>
+    (await getSubmissionPayment(parent.id))?.paymentAmount ?? null,
+  paymentDate: async (parent: { id: string }) =>
+    (await getSubmissionPayment(parent.id))?.paymentDate ?? null,
+  paymentStatus: async (parent: { id: string }) =>
+    (await getSubmissionPayment(parent.id))?.paymentStatus ?? null,
+};
 
 export const submissionsResolvers = {
+  UgcSubmission: submissionMetaResolvers,
+  CpmSubmission: submissionMetaResolvers,
+  ContestSubmission: submissionMetaResolvers,
   Query: {
     liveUgcOrders: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
-      await requireCreatorApplyAccess(ctx);
+      await requireCreatorBrowseAccess(ctx);
       return listLiveUgcOrders();
     },
     liveCpmDeals: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
-      await requireCreatorApplyAccess(ctx);
+      await requireCreatorBrowseAccess(ctx);
       return listLiveCpmDeals();
     },
     liveContests: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
-      await requireCreatorApplyAccess(ctx);
+      await requireCreatorBrowseAccess(ctx);
       return listLiveContests();
+    },
+    liveContest: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      await requireCreatorBrowseAccess(ctx);
+      return getContestForCreatorBrowse(id);
+    },
+    contestSubmissionCount: async (
+      _: unknown,
+      { contestId }: { contestId: string },
+      ctx: GraphQLContext,
+    ) => {
+      await requireCreatorBrowseAccess(ctx);
+      return getContestSubmissionCount(contestId);
+    },
+    contestPublicLeaderboard: async (
+      _: unknown,
+      { contestId, limit }: { contestId: string; limit?: number },
+      ctx: GraphQLContext,
+    ) => {
+      await requireCreatorBrowseAccess(ctx);
+      return getContestPublicLeaderboard(contestId, limit ?? 20);
     },
     myUgcSubmissions: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
       const session = await requireCreatorApplyAccess(ctx);

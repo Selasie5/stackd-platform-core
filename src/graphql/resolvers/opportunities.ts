@@ -27,6 +27,9 @@ import { requireAuth } from '@/auth/guards';
 import { requireAdmin, requireBrandWriteAccess } from '@/kyc/guards';
 import type { GraphQLContext } from '@/graphql/context';
 import type { OpportunityType, OpportunityStatus } from '@/opportunities/types';
+import { db } from '@/db/client';
+import { brands } from '@/db/schema/index';
+import { eq } from 'drizzle-orm';
 
 export const opportunitiesResolvers = {
   OpportunityResult: {
@@ -35,6 +38,15 @@ export const opportunitiesResolvers = {
       if (obj.__typename === 'CpmDeal') return 'CpmDeal';
       if (obj.__typename === 'Contest') return 'Contest';
       return null;
+    },
+  },
+  Contest: {
+    brandName: async (parent: { brandId: string }) => {
+      const brand = await db.query.brands.findFirst({
+        where: eq(brands.id, parent.brandId),
+        columns: { brandName: true },
+      });
+      return brand?.brandName ?? null;
     },
   },
   Query: {

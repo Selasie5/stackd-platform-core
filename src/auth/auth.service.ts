@@ -10,6 +10,8 @@ import { buildEmailVerifyKey, EMAIL_VERIFY_TTL_SECONDS } from '@/auth/constants'
 import { authError } from '@/auth/errors';
 import { createSession, revokeSession } from '@/auth/session.service';
 import { sendVerificationEmail } from '@/services/email/index';
+import { getKycStatusForUser } from '@/kyc/kyc.service';
+import { currencyForCountry } from '@/lib/currency';
 import type { EmailVerificationPayload, SessionData, UserRole } from '@/auth/types';
 
 const registerBrandSchema = z.object({
@@ -44,13 +46,6 @@ type UserWithProfiles = InferSelectModel<typeof users> & {
   creator: InferSelectModel<typeof creators> | null;
 };
 
-function currencyForCountry(country: string): 'NGN' | 'GHS' | 'USD' {
-  const c = country.toLowerCase();
-  if (c.includes('nigeria') || c === 'ng') return 'NGN';
-  if (c.includes('ghana') || c === 'gh') return 'GHS';
-  return 'USD';
-}
-
 export function formatUser(user: UserWithProfiles) {
   return {
     id: user.id,
@@ -82,6 +77,7 @@ export function formatUser(user: UserWithProfiles) {
           city: user.creator.city,
           phone: user.creator.phone,
           bio: user.creator.bio,
+          profileImage: user.creator.profileImage,
           mainNiche: user.creator.mainNiche,
           isProfileComplete: user.creator.isProfileComplete,
           kycStatus: user.creator.kycStatus,
@@ -213,7 +209,7 @@ export async function registerCreator(input: unknown) {
     })
     .returning();
 
-  const currency = data.country ? currencyForCountry(data.country) : 'NGN';
+  const currency = data.country ? currencyForCountry(data.country) : 'GHS';
   await db.insert(creatorWallets).values({
     creatorId: creator.id,
     currency,
@@ -327,5 +323,16 @@ export async function getMe(userId: string) {
   if (!user) {
     throw authError('USER_NOT_FOUND', 'User not found');
   }
-  return formatUser(user);
+
+  const formatted = formatUser(user);
+
+  if (formatted.brand) {
+    formatted.brand.kycStatus = await getKycStatusForUser(userId, 'brand');
+  }
+
+  if (formatted.creator) {
+    formatted.creator.kycStatus = await getKycStatusForUser(userId, 'creator');
+  }
+
+  return formatted;
 }

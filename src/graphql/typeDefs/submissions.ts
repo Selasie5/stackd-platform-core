@@ -16,6 +16,13 @@ export const submissionsTypeDefs = `#graphql
     id: ID!
     ugcOrderId: ID!
     creatorId: ID!
+    opportunityTitle: String
+    brandName: String
+    potentialPayout: String
+    currency: Currency
+    paymentAmount: String
+    paymentDate: String
+    paymentStatus: PaymentStatus
     videoUrl: String
     thumbnailUrl: String
     watermarkedPreviewUrl: String
@@ -36,6 +43,13 @@ export const submissionsTypeDefs = `#graphql
     id: ID!
     cpmDealId: ID!
     creatorId: ID!
+    opportunityTitle: String
+    brandName: String
+    potentialPayout: String
+    currency: Currency
+    paymentAmount: String
+    paymentDate: String
+    paymentStatus: PaymentStatus
     postedVideoLink: String!
     platform: TargetPlatform!
     submissionNote: String
@@ -54,6 +68,13 @@ export const submissionsTypeDefs = `#graphql
     id: ID!
     contestId: ID!
     creatorId: ID!
+    opportunityTitle: String
+    brandName: String
+    potentialPayout: String
+    currency: Currency
+    paymentAmount: String
+    paymentDate: String
+    paymentStatus: PaymentStatus
     videoUrl: String
     videoLink: String
     thumbnailUrl: String
@@ -74,6 +95,17 @@ export const submissionsTypeDefs = `#graphql
     winnerSelectedAt: String
     createdAt: String!
     updatedAt: String!
+  }
+
+  type ContestLeaderboardEntry {
+    rank: Int!
+    submissionId: ID!
+    leaderboardScore: Int!
+    thumbnailUrl: String
+    placement: Int
+    creatorDisplayName: String!
+    status: SubmissionStatus!
+    createdAt: String!
   }
 
   input SubmitUgcSubmissionInput {
@@ -135,6 +167,9 @@ export const submissionsTypeDefs = `#graphql
     liveUgcOrders: [UgcOrder!]!
     liveCpmDeals: [CpmDeal!]!
     liveContests: [Contest!]!
+    liveContest(id: ID!): Contest!
+    contestSubmissionCount(contestId: ID!): Int!
+    contestPublicLeaderboard(contestId: ID!, limit: Int = 20): [ContestLeaderboardEntry!]!
     myUgcSubmissions: [UgcSubmission!]!
     myCpmSubmissions: [CpmSubmission!]!
     myContestSubmissions: [ContestSubmission!]!

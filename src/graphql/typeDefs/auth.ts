@@ -36,6 +36,7 @@ export const authTypeDefs = `#graphql
     city: String
     phone: String
     bio: String
+    profileImage: String
     mainNiche: String
     isProfileComplete: Boolean!
     kycStatus: String!

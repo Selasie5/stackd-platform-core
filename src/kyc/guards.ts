@@ -29,6 +29,14 @@ export async function requireCreatorApplyAccess(ctx: GraphQLContext): Promise<Se
   return requireKycApproved(ctx);
 }
 
+export async function requireCreatorBrowseAccess(ctx: GraphQLContext): Promise<SessionData> {
+  const session = requireEmailVerified(ctx);
+  if (session.role !== 'creator') {
+    throw authError('FORBIDDEN', 'You do not have permission to perform this action');
+  }
+  return session;
+}
+
 export function requireAdmin(ctx: GraphQLContext): SessionData {
   return requireRole(ctx, ['admin']);
 }

@@ -16,17 +16,15 @@ import { kycError } from '@/kyc/errors';
 import type { KycReviewDecision, SubmitKycInput } from '@/kyc/types';
 import type { SessionData, UserRole } from '@/auth/types';
 
+const documentSchema = z.object({
+  documentType: z.string().min(1),
+  fileUrl: z.string().url(),
+  fileName: z.string().optional(),
+  note: z.string().optional(),
+});
+
 const submitKycSchema = z.object({
-  documents: z
-    .array(
-      z.object({
-        documentType: z.string().min(1),
-        fileUrl: z.string().url(),
-        fileName: z.string().optional(),
-        note: z.string().optional(),
-      }),
-    )
-    .min(1),
+  documents: z.array(documentSchema).default([]),
   schoolEmail: z.string().email().optional(),
   applicantNote: z.string().optional(),
 });
@@ -214,6 +212,17 @@ export async function submitKyc(userId: string, role: UserRole, input: unknown) 
   }
 
   const data = submitKycSchema.parse(input) as SubmitKycInput;
+
+  if (role === 'brand' && data.documents.length === 0) {
+    throw kycError('KYC_INVALID_DOCUMENTS', 'Upload at least one verification document');
+  }
+
+  if (role === 'creator' && data.documents.length === 0 && !data.schoolEmail) {
+    throw kycError(
+      'KYC_INVALID_DOCUMENTS',
+      'Upload a verification document or provide your school email',
+    );
+  }
 
   const brand =
     role === 'brand' ? await db.query.brands.findFirst({ where: eq(brands.userId, userId) }) : null;
