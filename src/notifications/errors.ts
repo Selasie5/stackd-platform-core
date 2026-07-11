@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql/index.js';
+import { GraphQLError } from 'graphql';
 
 export type NotificationErrorCode = 'NOTIFICATION_NOT_FOUND' | 'FORBIDDEN';
 

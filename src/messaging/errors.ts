@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql/index.js';
+import { GraphQLError } from 'graphql';
 
 export type MessageErrorCode =
   | 'MESSAGE_NOT_FOUND'

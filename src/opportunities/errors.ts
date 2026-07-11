@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql/index.js';
+import { GraphQLError } from 'graphql';
 
 export type OpportunityErrorCode =
   | 'OPPORTUNITY_NOT_FOUND'
