@@ -6,7 +6,7 @@ import { clampLimit } from '@/admin/list.utils';
 import { notify, notifyAdmins } from '@/notifications/notification.service';
 import type { SessionData } from '@/auth/types';
 import { opportunityError } from '@/opportunities/errors';
-import { releaseEscrowForOpportunity } from '@/payments/escrow.service';
+import { getAllocatedAmountForOpportunity, releaseEscrowForOpportunity } from '@/payments/escrow.service';
 import { releaseFunds, reserveFunds } from '@/opportunities/wallet.service';
 import {
   getTargetStatus,
@@ -157,6 +157,13 @@ async function applyTransition(
 
   if (action === 'cancel' && record.reservedAt) {
     await releaseFunds(record.brandId, record.budgetAmount, record.currency, reference);
+  }
+
+  if (action === 'close' && record.reservedAt) {
+    const allocated = await getAllocatedAmountForOpportunity(record.id);
+    if (allocated === 0) {
+      await releaseFunds(record.brandId, record.budgetAmount, record.currency, reference);
+    }
   }
 
   if (action === 'complete') {
