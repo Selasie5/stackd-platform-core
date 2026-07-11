@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql';
+import { GraphQLError } from 'graphql/index.js';
 
 export type DisputeErrorCode =
   | 'DISPUTE_NOT_FOUND'

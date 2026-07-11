@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql';
+import { GraphQLError } from 'graphql/index.js';
 
 export type KycErrorCode =
   | 'KYC_NOT_APPROVED'
