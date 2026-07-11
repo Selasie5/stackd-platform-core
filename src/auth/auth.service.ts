@@ -327,11 +327,11 @@ export async function getMe(userId: string) {
   const formatted = formatUser(user);
 
   if (formatted.brand) {
-    formatted.brand.kycStatus = await getKycStatusForUser(userId, 'brand');
+    formatted.brand.kycStatus = (await getKycStatusForUser(userId, 'brand')) as typeof formatted.brand.kycStatus;
   }
 
   if (formatted.creator) {
-    formatted.creator.kycStatus = await getKycStatusForUser(userId, 'creator');
+    formatted.creator.kycStatus = (await getKycStatusForUser(userId, 'creator')) as typeof formatted.creator.kycStatus;
   }
 
   return formatted;
