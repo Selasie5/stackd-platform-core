@@ -35,6 +35,10 @@ export const submissionsTypeDefs = `#graphql
     status: SubmissionStatus!
     approvedAt: String
     cleanVideoReleasedAt: String
+    autoFetchedViews: Int
+    autoFetchedLikes: Int
+    autoFetchedComments: Int
+    videoVerifiedAt: String
     createdAt: String!
     updatedAt: String!
   }
@@ -59,6 +63,10 @@ export const submissionsTypeDefs = `#graphql
     engagementCount: Int!
     calculatedPayout: String
     viewVerificationStatus: String!
+    autoFetchedViews: Int
+    autoFetchedLikes: Int
+    autoFetchedComments: Int
+    videoVerifiedAt: String
     status: SubmissionStatus!
     createdAt: String!
     updatedAt: String!
@@ -87,6 +95,10 @@ export const submissionsTypeDefs = `#graphql
     submittedViews: Int!
     approvedViews: Int
     engagementCount: Int!
+    autoFetchedViews: Int
+    autoFetchedLikes: Int
+    autoFetchedComments: Int
+    videoVerifiedAt: String
     leaderboardScore: Int!
     placement: Int
     rewardAmount: String

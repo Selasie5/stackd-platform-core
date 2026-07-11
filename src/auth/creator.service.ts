@@ -5,6 +5,11 @@ import { creatorSamples, creatorWallets, creators } from '@/db/schema/index';
 import { authError } from '@/auth/errors';
 import { currencyForCountry } from '@/lib/currency';
 import { parseAmount } from '@/opportunities/wallet.service';
+import {
+  verifyCreatorInstagram,
+  verifyCreatorTikTok,
+  verifyCreatorYoutubeChannel,
+} from '@/social/verification.service';
 
 const sampleCategories = [
   'ugc',
@@ -68,6 +73,15 @@ export function formatCreator(creator: typeof creators.$inferSelect) {
     tiktokHandle: creator.tiktokHandle,
     instagramHandle: creator.instagramHandle,
     youtubeHandle: creator.youtubeHandle,
+    youtubeChannelId: creator.youtubeChannelId,
+    youtubeSubscriberCount: creator.youtubeSubscriberCount,
+    youtubeChannelVerifiedAt: creator.youtubeChannelVerifiedAt?.toISOString() ?? null,
+    instagramUserId: creator.instagramUserId,
+    instagramFollowerCount: creator.instagramFollowerCount,
+    instagramVerifiedAt: creator.instagramVerifiedAt?.toISOString() ?? null,
+    tiktokUserId: creator.tiktokUserId,
+    tiktokFollowerCount: creator.tiktokFollowerCount,
+    tiktokVerifiedAt: creator.tiktokVerifiedAt?.toISOString() ?? null,
     languagesSpoken: creator.languagesSpoken ?? [],
     equipment: creator.equipment ?? [],
     availability: creator.availability,
@@ -91,6 +105,21 @@ function formatCreatorSample(sample: typeof creatorSamples.$inferSelect) {
 export async function getCreatorProfile(userId: string) {
   const creator = await db.query.creators.findFirst({
     where: eq(creators.userId, userId),
+    with: { samples: true },
+  });
+
+  if (!creator) return null;
+
+  const { samples, ...rest } = creator;
+  return {
+    ...formatCreator(rest),
+    samples: samples.map(formatCreatorSample),
+  };
+}
+
+export async function getCreatorById(creatorId: string) {
+  const creator = await db.query.creators.findFirst({
+    where: eq(creators.id, creatorId),
     with: { samples: true },
   });
 
@@ -165,6 +194,27 @@ export async function updateCreatorProfile(userId: string, input: unknown) {
       }
     }
   });
+
+  if (data.youtubeHandle && data.youtubeHandle !== creator.youtubeHandle) {
+    try {
+      await verifyCreatorYoutubeChannel(creator.id);
+    } catch {
+    }
+  }
+
+  if (data.instagramHandle && data.instagramHandle !== creator.instagramHandle) {
+    try {
+      await verifyCreatorInstagram(creator.id);
+    } catch {
+    }
+  }
+
+  if (data.tiktokHandle && data.tiktokHandle !== creator.tiktokHandle) {
+    try {
+      await verifyCreatorTikTok(creator.id);
+    } catch {
+    }
+  }
 
   return getCreatorProfile(userId);
 }
