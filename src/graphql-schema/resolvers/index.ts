@@ -1,14 +1,14 @@
-﻿import { adminResolvers } from '@/graphql/resolvers/admin';
-import { authResolvers } from '@/graphql/resolvers/auth';
-import { disputesResolvers } from '@/graphql/resolvers/disputes';
-import { kycResolvers } from '@/graphql/resolvers/kyc';
-import { messagingResolvers } from '@/graphql/resolvers/messaging';
-import { notificationsResolvers } from '@/graphql/resolvers/notifications';
-import { opportunitiesResolvers } from '@/graphql/resolvers/opportunities';
-import { settingsResolvers } from '@/graphql/resolvers/settings';
-import { socialResolvers } from '@/graphql/resolvers/social';
-import { submissionsResolvers } from '@/graphql/resolvers/submissions';
-import { walletResolvers } from '@/graphql/resolvers/wallet';
+import { adminResolvers } from '@/graphql-schema/resolvers/admin';
+import { authResolvers } from '@/graphql-schema/resolvers/auth';
+import { disputesResolvers } from '@/graphql-schema/resolvers/disputes';
+import { kycResolvers } from '@/graphql-schema/resolvers/kyc';
+import { messagingResolvers } from '@/graphql-schema/resolvers/messaging';
+import { notificationsResolvers } from '@/graphql-schema/resolvers/notifications';
+import { opportunitiesResolvers } from '@/graphql-schema/resolvers/opportunities';
+import { settingsResolvers } from '@/graphql-schema/resolvers/settings';
+import { socialResolvers } from '@/graphql-schema/resolvers/social';
+import { submissionsResolvers } from '@/graphql-schema/resolvers/submissions';
+import { walletResolvers } from '@/graphql-schema/resolvers/wallet';
 
 export const resolvers = {
   OpportunityResult: opportunitiesResolvers.OpportunityResult,

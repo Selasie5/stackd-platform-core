@@ -1,5 +1,5 @@
 import { requireAuth } from '@/auth/guards';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import {
   verifyCreatorInstagram,
   verifyCreatorTikTok,

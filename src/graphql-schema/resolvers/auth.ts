@@ -11,7 +11,7 @@ import {
 import { requestPasswordReset, resetPassword } from '@/auth/password-reset.service';
 import { setSessionCookie, clearSessionCookie } from '@/auth/cookies';
 import { requireAuth } from '@/auth/guards';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 
 function requestMeta(ctx: GraphQLContext) {
   return {

@@ -1,4 +1,4 @@
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { requireAdmin, requireBrandWriteAccess, requireCreatorApplyAccess } from '@/kyc/guards';
 import { getMyBrandWallet, initializeWalletTopUp, verifyWalletTopUp } from '@/payments/wallet-funding.service';
 import {

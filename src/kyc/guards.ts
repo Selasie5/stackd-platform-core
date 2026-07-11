@@ -1,4 +1,4 @@
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { authError } from '@/auth/errors';
 import { requireEmailVerified, requireRole } from '@/auth/guards';
 import { getKycStatusForUser } from '@/kyc/kyc.service';

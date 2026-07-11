@@ -1,6 +1,6 @@
 import { requireAuth } from '@/auth/guards';
 import { requireAdmin } from '@/kyc/guards';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { getAdminActionCounts } from '@/notifications/admin.service';
 import {
   getUnreadNotificationCount,

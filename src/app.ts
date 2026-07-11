@@ -5,9 +5,9 @@ import cookieParser from 'cookie-parser';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { allTypeDefs } from '@/graphql/typeDefs/index';
-import { resolvers } from '@/graphql/resolvers/index';
-import type { GraphQLContext } from '@/graphql/context';
+import { allTypeDefs } from '@/graphql-schema/typeDefs/index';
+import { resolvers } from '@/graphql-schema/resolvers/index';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { SESSION_COOKIE_NAME } from '@/auth/constants';
 import { getSession } from '@/auth/session.service';
 import { paystackWebhookHandler } from '@/routes/paystack-webhook';
@@ -17,7 +17,7 @@ import { sql } from 'drizzle-orm';
 import { generateSignature } from '@/utils/cloudinary';
 import { config } from '@/config';
 
-export type { GraphQLContext } from '@/graphql/context';
+export type { GraphQLContext } from '@/graphql-schema/context';
 
 export const app = express();
 app.set('trust proxy', 1);

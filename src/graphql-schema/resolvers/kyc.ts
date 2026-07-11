@@ -6,7 +6,7 @@ import {
 } from '@/kyc/kyc.service';
 import { requireAuth, requireEmailVerified } from '@/auth/guards';
 import { requireAdmin } from '@/kyc/guards';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 
 export const kycResolvers = {
   Query: {

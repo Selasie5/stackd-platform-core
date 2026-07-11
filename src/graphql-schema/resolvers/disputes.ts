@@ -1,4 +1,4 @@
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { requireAuth } from '@/auth/guards';
 import { requireAdmin } from '@/kyc/guards';
 import {

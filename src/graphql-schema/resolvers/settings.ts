@@ -1,6 +1,6 @@
 import { requireAuth } from '@/auth/guards';
 import { SESSION_COOKIE_NAME } from '@/auth/constants';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import {
   getBrand,
   updateBrand,

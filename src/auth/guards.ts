@@ -1,4 +1,4 @@
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import { authError } from '@/auth/errors';
 import type { SessionData, UserRole } from '@/auth/types';
 

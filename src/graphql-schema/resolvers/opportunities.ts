@@ -25,7 +25,7 @@ import {
 } from '@/opportunities/index';
 import { requireAuth } from '@/auth/guards';
 import { requireAdmin, requireBrandWriteAccess } from '@/kyc/guards';
-import type { GraphQLContext } from '@/graphql/context';
+import type { GraphQLContext } from '@/graphql-schema/context';
 import type { OpportunityType, OpportunityStatus } from '@/opportunities/types';
 import { db } from '@/db/client';
 import { brands } from '@/db/schema/index';
