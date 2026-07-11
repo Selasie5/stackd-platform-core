@@ -53,6 +53,19 @@ export const socialTypeDefs = `#graphql
     youtubeVideo: YouTubeVideoInfo
   }
 
+  type SocialHandleCheckResult {
+    valid: Boolean!
+    platform: String!
+    displayName: String
+    avatarUrl: String
+    followerCount: Int
+    error: String
+  }
+
+  extend type Query {
+    checkSocialHandle(platform: String!, handle: String!): SocialHandleCheckResult!
+  }
+
   extend type Mutation {
     verifyCreatorYouTubeChannel: YouTubeChannelInfo!
     verifyCreatorInstagram: InstagramProfileInfo!

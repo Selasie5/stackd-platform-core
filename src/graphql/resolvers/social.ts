@@ -6,9 +6,85 @@ import {
   verifyCreatorYoutubeChannel,
   verifySubmissionVideo,
 } from '@/social/verification.service';
+import { getChannelByHandle } from '@/social/youtube.client';
+import { getInstagramProfile } from '@/social/instagram.client';
+import { getTikTokProfile } from '@/social/tiktok.client';
+import { extractChannelHandle } from '@/social/youtube.client';
+import { extractInstagramHandle } from '@/social/instagram.client';
+import { extractTikTokHandle } from '@/social/tiktok.client';
+import { getCached, setCache } from '@/utils/cache';
+
+interface SocialHandleCheckResult {
+  valid: boolean;
+  platform: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  followerCount: number | null;
+  error: string | null;
+}
 
 export const socialResolvers = {
-  Query: {},
+  Query: {
+    checkSocialHandle: async (
+      _: unknown,
+      { platform, handle }: { platform: string; handle: string },
+    ) => {
+      const trimmed = handle?.trim()
+      if (!trimmed) {
+        return { valid: false, platform, displayName: null, avatarUrl: null, followerCount: null, error: null };
+      }
+
+      const cacheKey = `checkSocialHandle:${platform}:${trimmed.toLowerCase()}`
+      const cached = getCached<SocialHandleCheckResult>(cacheKey)
+      if (cached) return cached
+
+      try {
+        let result: SocialHandleCheckResult
+
+        if (platform === 'youtube') {
+          const channel = await getChannelByHandle(trimmed);
+          result = {
+            valid: true,
+            platform,
+            displayName: channel.title,
+            avatarUrl: channel.thumbnailUrl,
+            followerCount: channel.subscriberCount,
+            error: null,
+          };
+        } else if (platform === 'instagram') {
+          const profile = await getInstagramProfile(trimmed);
+          result = {
+            valid: true,
+            platform,
+            displayName: profile.fullName,
+            avatarUrl: profile.avatarUrl,
+            followerCount: profile.followerCount,
+            error: null,
+          };
+        } else if (platform === 'tiktok') {
+          const profile = await getTikTokProfile(trimmed);
+          result = {
+            valid: true,
+            platform,
+            displayName: profile.displayName,
+            avatarUrl: profile.avatarUrl,
+            followerCount: profile.followerCount,
+            error: null,
+          };
+        } else {
+          result = { valid: false, platform, displayName: null, avatarUrl: null, followerCount: null, error: 'Unknown platform' };
+        }
+
+        setCache(cacheKey, result, 300_000)
+        return result
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Verification failed';
+        const errorResult: SocialHandleCheckResult = { valid: false, platform, displayName: null, avatarUrl: null, followerCount: null, error: message };
+        setCache(cacheKey, errorResult, 30_000)
+        return errorResult
+      }
+    },
+  },
   Mutation: {
     verifyCreatorYouTubeChannel: async (
       _: unknown,
