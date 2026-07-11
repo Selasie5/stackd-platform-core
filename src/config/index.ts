@@ -52,6 +52,7 @@ const envSchema = z.object({
   MOOLRE_WEBHOOK_SECRET: z.string().optional(),
   MOOLRE_WEBHOOK_URL: z.string().optional(),
   MOOLRE_ACCOUNT_NUMBER: z.string().optional(),
+  YOUTUBE_API_KEY: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

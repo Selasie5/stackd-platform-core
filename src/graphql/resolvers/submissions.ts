@@ -1,6 +1,7 @@
 import type { GraphQLContext } from '@/graphql/context';
 import { requireAuth } from '@/auth/guards';
 import { requireBrandWriteAccess, requireCreatorApplyAccess, requireCreatorBrowseAccess } from '@/kyc/guards';
+import { getCreatorById } from '@/auth/creator.service';
 import {
   approveCpmSubmission,
   approveUgcSubmission,
@@ -34,6 +35,10 @@ import {
 } from '@/submissions/submission-metadata.service';
 
 const submissionMetaResolvers = {
+  creator: async (parent: { creatorId: string }) => {
+    if (!parent.creatorId) return null;
+    return getCreatorById(parent.creatorId);
+  },
   opportunityTitle: async (
     parent: { ugcOrderId?: string; cpmDealId?: string; contestId?: string },
   ) => {

@@ -75,6 +75,9 @@ export const settingsTypeDefs = `#graphql
     equipment: [String!]!
     availability: String
     samples: [CreatorSample!]!
+    youtubeChannelId: String
+    youtubeSubscriberCount: Int
+    youtubeChannelVerifiedAt: String
     createdAt: String!
   }
 
